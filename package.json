@@ -1,0 +1,11 @@
+{
+  "name": "matloc-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Demo of MATLOC, the Macmillan Ad Toolkit: an approval-gated advertising agent for book imprints.",
+  "scripts": {
+    "start": "npx --yes http-server@14.1.1 -p 8080 -c-1 .",
+    "test": "node --test"
+  },
+  "license": "UNLICENSED"
+}
