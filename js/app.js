@@ -14,7 +14,8 @@
   let S = E.makeState();
   const UI = {
     role: "imprint_marketer", budgetCampaign: "cmp_salt", titleCampaign: "cmp_glass", reportCampaign: "cmp_ninefold",
-    edit: {}, reject: {}, exec: {}, auditFilter: "all", expanded: { cmp_salt: true }, wiz: null
+    edit: {}, reject: {}, exec: {}, auditFilter: "all", expanded: { cmp_salt: true }, wiz: null,
+    nudged: {}, seenReports: {}, mode: null, titleQuery: "", collapsed: false, flash: null
   };
   function freshWizard() {
     return {
@@ -34,17 +35,24 @@
 
   const $ = (sel, el = document) => el.querySelector(sel);
   const view = () => $("#view");
-  function toast(msg) {
+  // toast(msg, next?) — next = { label, href } adds a "what to do next" link
+  function toast(msg, next) {
     const old = document.querySelector(".toast"); if (old) old.parentNode.removeChild(old);
-    const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role", "status");
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3200);
+    const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status");
+    t.innerHTML = `<span>${esc(msg)}</span>${next ? `<a href="${next.href}" class="toast-next">${esc(next.label)} →</a>` : ""}`;
+    document.body.appendChild(t); setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, next ? 6000 : 3200);
   }
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } }
+  };
   const campaignById = (id) => S.campaigns.find((c) => c.id === id);
   const liveCampaigns = () => S.campaigns.filter((c) => c.status === "live");
   const needsMe = () => S.proposals.filter((p) => (p.status === "pending" || p.status === "partially_approved") && p.requires_approval_from.includes(UI.role) && !p.approvals.includes(UI.role));
 
   // ---------------- shell ----------------
   const ROUTES = {
+    actions: { label: "Action center", render: renderActions },
     portfolio: { label: "Portfolio", render: renderPortfolio },
     approvals: { label: "Approvals", render: renderApprovals },
     budget: { label: "Budget & pacing", render: renderBudget },
@@ -54,6 +62,11 @@
     audit: { label: "Audit log", render: renderAudit }
   };
   const ICONS = {
+    actions: '<path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2" /><circle cx="8" cy="8" r="4"/>',
+    reporting: '<path d="M2 13h12M4 13V7m4 6V3m4 10V9" />',
+    titles: '<circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14" />',
+    collapse: '<path d="M10 3L5 8l5 5" />',
+    expand: '<path d="M6 3l5 5-5 5" />',
     portfolio: '<path d="M2 13h12M4 13V7m4 6V3m4 10V9" />',
     approvals: '<path d="M3 8.5l3 3 7-7" />',
     budget: '<circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2" />',
@@ -62,26 +75,211 @@
     report: '<path d="M3 2h10v12H3z M6 6h4M6 9h4" />',
     audit: '<path d="M2 4h12M2 8h12M2 12h8" />'
   };
-  function renderNav() {
+  const ico = (k) => `<svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]}</svg>`;
+
+  // ---- title health ----
+  const healthOf = (c) => E.titleHealth(S, c);
+  const campaignForTitle = (tid) => S.campaigns.find((c) => c.titleId === tid && c.status !== "completed") || S.campaigns.find((c) => c.titleId === tid);
+  function healthBadge(h, big) {
+    const deg = Math.round((h.score / 100) * 360);
+    if (h.status === "scheduled" || h.status === "done") return `<span class="health h-${h.status}"><span class="hlabel">${h.label}</span></span>`;
+    return `<span class="health h-${h.status}${big ? " big" : ""}" title="Health ${h.score}/100: ${h.label}"><span class="ring" style="--deg:${deg}deg"><b>${h.score}</b></span><span class="hlabel">${h.label}</span></span>`;
+  }
+
+  // ---- left menu: pinned items + three modes ----
+  const MODES = {
+    reporting: { label: "Reporting", routes: ["portfolio", "budget", "report", "audit"], home: "portfolio" },
+    launch: { label: "Launch", routes: ["launch"], home: "launch" },
+    titles: { label: "Titles", routes: ["title"], home: null }
+  };
+  const SUBLABEL = { portfolio: "Portfolio overview", budget: "Budget & pacing", report: "Campaign reports", audit: "Audit log" };
+  function modeFor(r) { return Object.keys(MODES).find((m) => MODES[m].routes.includes(r)) || null; }
+  function renderRail() {
     const r = route();
-    $("#nav").innerHTML = Object.entries(ROUTES).map(([k, v]) => {
-      const count = k === "approvals" ? needsMe().length : 0;
-      return `<a href="#${k}" data-tour="nav-${k}" ${r === k ? 'aria-current="page"' : ""}><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]}</svg>${v.label}${count ? `<span class="count">${count}</span>` : ""}</a>`;
-    }).join("");
+    const mode = UI.mode || modeFor(r) || "reporting";
+    const tasks = buildTasks().filter((t) => t.cta);
+    const q = (UI.titleQuery || "").toLowerCase();
+    const titles = D.TITLES.filter((t) => !q || (t.title + " " + t.author + " " + t.isbn + " " + E.imprintById(t.imprint).name).toLowerCase().includes(q));
+    const titleRow = (t) => {
+      const c = campaignForTitle(t.id);
+      const h = c ? healthOf(c) : null;
+      const cur = r === "title" && c && UI.titleCampaign === c.id;
+      return c
+        ? `<a href="#title" data-act="open-title" data-id="${c.id}" class="trow" ${cur ? 'aria-current="page"' : ""}><span class="hdot h-${h.status}" title="${h.label}${h.score != null && h.status !== "done" && h.status !== "scheduled" ? " " + h.score : ""}"></span><span class="tname">${esc(t.title)}<small>${esc(E.imprintById(t.imprint).name)}</small></span>${h.status === "risk" || h.status === "attention" ? `<span class="tscore">${h.score}</span>` : ""}</a>`
+        : `<a href="#launch" data-act="launch-title" data-id="${t.id}" class="trow"><span class="hdot none"></span><span class="tname">${esc(t.title)}<small>No campaign yet · launch</small></span></a>`;
+    };
+    let sub = "";
+    if (mode === "reporting") sub = MODES.reporting.routes.map((k) => `<a href="#${k}" class="sub-item" ${r === k ? 'aria-current="page"' : ""}>${ico(k)}<span>${SUBLABEL[k]}</span></a>`).join("");
+    if (mode === "launch") {
+      const ready = D.TITLES.filter((t) => t.unlaunched);
+      const sched = S.campaigns.filter((c) => c.status === "scheduled");
+      sub = `<a href="#launch" class="sub-item" data-act="wiz-reset-go" ${r === "launch" ? 'aria-current="page"' : ""}>${ico("launch")}<span>Start a new campaign</span></a>
+        <div class="rail-label">Ready to launch</div>${ready.length ? ready.map(titleRow).join("") : '<p class="rail-empty">Every upcoming title has a campaign.</p>'}
+        ${sched.length ? `<div class="rail-label">Scheduled</div>${sched.map((c) => titleRow(E.titleById(c.titleId))).join("")}` : ""}`;
+    }
+    if (mode === "titles") sub = `<label class="rail-search" for="title-q">${ico("titles")}<input id="title-q" type="search" placeholder="Title, author, ISBN, imprint" value="${esc(UI.titleQuery || "")}" autocomplete="off"></label>
+      <div class="rail-label">Sorted by health, worst first</div>
+      ${titles.slice().sort((a, b) => { const ca = campaignForTitle(a.id), cb = campaignForTitle(b.id); return (ca ? (ca.status === "live" ? healthOf(ca).score : 150) : 200) - (cb ? (cb.status === "live" ? healthOf(cb).score : 150) : 200); }).map(titleRow).join("") || '<p class="rail-empty">No titles match.</p>'}`;
+    $("#rail-body").innerHTML = `
+      <nav class="pinned" aria-label="Today">
+        <a href="#actions" ${r === "actions" ? 'aria-current="page"' : ""} title="Action center">${ico("actions")}<span class="lbl">Action center</span>${tasks.length ? `<span class="count">${tasks.length}</span>` : ""}</a>
+        <a href="#approvals" ${r === "approvals" ? 'aria-current="page"' : ""} title="Approvals">${ico("approvals")}<span class="lbl">Approvals</span>${needsMe().length ? `<span class="count">${needsMe().length}</span>` : ""}</a>
+      </nav>
+      <div class="modes" role="tablist" aria-label="Choose what you're doing" data-tour="modes">
+        ${Object.entries(MODES).map(([k, m]) => `<button role="tab" aria-selected="${mode === k}" data-act="mode" data-mode="${k}" title="${m.label}">${ico(k === "launch" ? "launch" : k)}<span class="lbl">${m.label}</span></button>`).join("")}
+      </div>
+      <div class="mode-body">${sub}</div>`;
+    document.body.classList.toggle("rail-collapsed", !!UI.collapsed);
+    $("#rail-toggle").innerHTML = ico(UI.collapsed ? "expand" : "collapse");
+    $("#rail-toggle").setAttribute("aria-label", UI.collapsed ? "Expand menu" : "Collapse menu");
+    $("#rail-toggle").setAttribute("aria-expanded", String(!UI.collapsed));
+  }
+  function renderBar() {
     $("#clock").textContent = fmtDate(S.today);
     $("#role").value = UI.role;
     $("#kill").hidden = !S.killSwitch;
+    const top = buildTasks().find((t) => t.cta);
+    $("#next-chip").innerHTML = top ? `<span class="nlabel">Next step</span><span class="ntext">${esc(top.short || top.title)}</span><span class="ngo">${esc(top.cta.act === "approve" ? "Review" : top.cta.label)} →</span>` : `<span class="nlabel">All clear</span><span class="ntext">Nothing needs you right now</span>`;
+    $("#next-chip").dataset.task = top ? top.id : "";
+    $("#next-chip").disabled = !top;
   }
-  function route() { const h = location.hash.replace("#", ""); return ROUTES[h] ? h : "portfolio"; }
+  function route() { const h = location.hash.replace("#", ""); return ROUTES[h] ? h : "actions"; }
   function render() {
-    renderNav();
     const r = route();
+    if (UI.mode && modeFor(r) && modeFor(r) !== UI.mode && r !== "title") UI.mode = null;
+    renderRail();
+    renderBar();
     view().innerHTML = ROUTES[r].render();
+    const nb = nextBest(r);
+    if (nb) { const head = $(".view-head", view()); if (head) head.insertAdjacentHTML("afterend", nb); }
     after[r] && after[r]();
     document.title = "MATLOC · " + ROUTES[r].label;
     window.dispatchEvent(new CustomEvent("matloc:render", { detail: r }));
   }
   const after = {};
+
+  // ---------------- GUIDANCE: tasks, action center, next best action ----------------
+  const RISK_ORDER = { high: 0, medium: 1, low: 2 };
+  function buildTasks() {
+    const tasks = [];
+    // 1. Safety stops: urgent
+    S.campaigns.filter((c) => c.status === "live").forEach((c) => {
+      D.PLATFORM_ORDER.forEach((p) => {
+        if (c.platforms[p].status !== "paused_safety") return;
+        const t = E.titleById(c.titleId);
+        const prop = S.proposals.find((x) => x.key === "resume_" + c.id + p && (x.status === "pending" || x.status === "partially_approved"));
+        tasks.push({
+          id: "cap_" + c.id + p, pri: "urgent", time: "2 min",
+          title: `${D.PLATFORMS[p].name} on ${t.title} is paused at its spending cap`,
+          short: `Decide on paused ${D.PLATFORMS[p].name} (${t.title})`,
+          why: "A one-day spend spike hit the hard cap and the safety stop paused it. Delivery is off until someone decides. Resuming without new budget will hit the cap again, so consider moving budget from an under-pacing platform first.",
+          cta: prop ? { label: "Review the resume proposal", act: "goto-prop", id: prop.proposal_id } : { label: "Open budget", href: "#budget" },
+          title_id: t.id
+        });
+      });
+    });
+    // 2. Decisions that need me
+    needsMe().slice().sort((a, b) => RISK_ORDER[a.risk] - RISK_ORDER[b.risk] || a.expires_at.localeCompare(b.expires_at)).forEach((p) => {
+      if (p.action_type === "resume_platform") return;
+      const c = campaignById(p.campaign_id), t = E.titleById(c.titleId);
+      const days = E.daysBetween(S.today, p.expires_at);
+      tasks.push({
+        id: "prop_" + p.proposal_id, pri: p.risk === "high" || days <= 1 ? "today" : "today", time: "1 min",
+        title: p.summary, short: `Decide: ${p.summary.split(" ").slice(0, 6).join(" ")}…`,
+        why: `${t.title}. ${p.evidence[0]}.`,
+        rec: `Agent recommends approving · ${p.risk} risk · expected ${p.expected_impact.metric} ${p.expected_impact.estimate}`,
+        expires: days, approvers: p.requires_approval_from.map((r) => E.ROLES[r]),
+        cta: { label: "Approve", act: "approve", id: p.proposal_id }, alt: { label: "Review details", act: "goto-prop", id: p.proposal_id },
+        title_id: t.id
+      });
+    });
+    // 3. Decisions waiting on someone else that I already approved: nudge
+    S.proposals.filter((p) => p.status === "partially_approved" && p.approvals.includes(UI.role) && !UI.nudged[p.proposal_id]).forEach((p) => {
+      const waiting = p.requires_approval_from.filter((r) => !p.approvals.includes(r)).map((r) => E.ROLES[r]);
+      tasks.push({ id: "nudge_" + p.proposal_id, pri: "today", time: "10 sec", title: `Remind ${waiting.join(" and ")} about ${p.proposal_id}`, short: `Remind ${waiting[0]}`, why: `You approved "${p.summary}". It cannot run until ${waiting.join(" and ")} sign${waiting.length > 1 ? "" : "s"} off, and it expires ${shortDate(p.expires_at)}.`, cta: { label: "Send reminder", act: "nudge", id: p.proposal_id } });
+    });
+    // 4. Titles that should be launching soon
+    D.TITLES.filter((t) => t.unlaunched).forEach((t) => {
+      const d = E.daysBetween(S.today, t.pubDate);
+      tasks.push({ id: "launch_" + t.id, pri: "week", time: "10 min", title: `Plan the pre-order campaign for ${t.title}`, short: `Plan launch: ${t.title}`, why: `Publishes ${fmtDate(t.pubDate)} (${d} days). Pre-order campaigns work best starting 6 to 8 weeks before pub, and a plan this size needs director sign-off, so starting now leaves room for approvals.`, cta: { label: "Start the launch", act: "launch-title", id: t.id }, title_id: t.id });
+    });
+    // 5. Finished campaigns whose learnings have not been reviewed
+    S.campaigns.filter((c) => c.status === "completed" && !UI.seenReports[c.id]).forEach((c) => {
+      const t = E.titleById(c.titleId);
+      tasks.push({ id: "report_" + c.id, pri: "week", time: "3 min", title: `Review the results for ${t.title} and carry the learnings forward`, short: `Read the ${t.title} report`, why: "The flight ended and the report is ready. It recommends four changes for the next campaign, including two that apply to your upcoming launch.", cta: { label: "Open the report", act: "open-report", id: c.id }, title_id: t.id });
+    });
+    // 6. Nothing to do, for awareness
+    if (S.blocked.length) tasks.push({ id: "blocked", pri: "fyi", title: `${S.blocked.length} agent idea${S.blocked.length > 1 ? "s were" : " was"} held by guardrails`, why: "The policy engine refused it before it reached anyone. No action needed.", alt: { label: "See why", href: "#approvals" } });
+    return tasks;
+  }
+  const PRI = { urgent: "Urgent", today: "Today", week: "This week", fyi: "For your information" };
+  function taskCard(t, i) {
+    const tt = t.title_id ? E.titleById(t.title_id) : null;
+    const btn = (b, cls) => b.href ? `<a class="btn ${cls}" href="${b.href}">${esc(b.label)}</a>` : `<button class="btn ${cls}" data-act="${b.act}" data-id="${b.id}">${esc(b.label)}</button>`;
+    return `<article class="task ${t.pri}" ${i === 0 ? 'data-tour="top-task"' : ""}>
+      <div class="task-n" aria-hidden="true">${t.pri === "fyi" ? "i" : i + 1}</div>
+      <div class="task-main">
+        <div class="task-meta"><span class="pri ${t.pri}">${PRI[t.pri]}</span>${t.time ? `<span>about ${t.time}</span>` : ""}${tt ? `<span>${esc(tt.title)}</span>` : ""}${t.expires != null ? `<span>expires ${t.expires <= 0 ? "today" : "in " + t.expires + " day" + (t.expires > 1 ? "s" : "")}</span>` : ""}</div>
+        <h3 class="task-title">${esc(t.title)}</h3>
+        <p class="task-why">${esc(t.why)}</p>
+        ${t.rec ? `<p class="task-rec">${esc(t.rec)}</p>` : ""}
+        ${t.approvers && t.approvers.length > 1 ? `<p class="small muted">Needs: ${t.approvers.map(esc).join(", ")}</p>` : ""}
+      </div>
+      <div class="task-cta">${t.cta ? btn(t.cta, "primary") : ""}${t.alt ? btn(t.alt, "ghost") : ""}</div>
+    </article>`;
+  }
+  function renderActions() {
+    const tasks = buildTasks();
+    const todo = tasks.filter((t) => t.cta);
+    const doneToday = S.audit.filter((a) => a.actor === "human" && a.ts.startsWith(S.today)).length;
+    const live = liveCampaigns();
+    const hs = live.map((c) => ({ c, h: healthOf(c), t: E.titleById(c.titleId) })).sort((a, b) => a.h.score - b.h.score);
+    return `<div class="view-head"><div><div class="eyebrow">Action center · ${E.ROLES[UI.role]}</div><h1>${todo.length ? `${todo.length} thing${todo.length > 1 ? "s" : ""} need you today` : "You're all caught up"}</h1>
+      <p>MATLOC watched spend and performance on all four platforms overnight. These are the only items that need a person, in the order to do them. Everything else is on track.</p></div>
+      <div class="progress-pill" aria-label="Progress today"><b class="num">${doneToday}</b> done today<span class="bar-p"><span style="width:${Math.min(100, (doneToday / Math.max(1, doneToday + todo.length)) * 100)}%"></span></span></div></div>
+    <div class="grid g-main">
+      <section class="stack" data-tour="tasks" aria-label="Your tasks">${tasks.length ? tasks.map(taskCard).join("") : '<div class="panel panel-b">Nothing needs you right now. The agents will add items here when a decision is needed.</div>'}</section>
+      <aside class="stack">
+        <div class="panel" data-tour="health-list"><div class="panel-h"><h3>Title health</h3><a class="small" href="#portfolio">Portfolio →</a></div><div class="panel-b stack" style="gap:0">
+          ${hs.map(({ c, h, t }) => `<button class="hrow" data-act="open-title" data-id="${c.id}">${cover(t, 26)}<span class="hrow-t"><b>${esc(t.title)}</b><span class="small muted">${esc(h.reasons[0].text)}</span></span>${healthBadge(h)}</button>`).join("")}
+        </div></div>
+        <div class="panel"><div class="panel-h"><h3>What the agents did overnight</h3></div><div class="panel-b feed">${S.activity.slice(0, 5).map((x) => `<div class="feed-item ${x.kind}"><div class="who">${esc(x.agent)}</div><div>${esc(x.text)}</div></div>`).join("")}</div></div>
+      </aside>
+    </div>`;
+  }
+  // A one-line "do this next" banner tailored to each screen.
+  function nextBest(r) {
+    const tasks = buildTasks().filter((t) => t.cta);
+    const banner = (text, b, tone = "") => `<div class="nba ${tone}" data-tour="nba"><span class="nba-k">Next best action</span><span class="nba-t">${text}</span>${b.href ? `<a class="btn primary sm" href="${b.href}">${esc(b.label)}</a>` : `<button class="btn primary sm" data-act="${b.act}" data-id="${b.id || ""}">${esc(b.label)}</button>`}</div>`;
+    if (r === "actions" || r === "audit") return "";
+    if (r === "approvals") {
+      const low = needsMe().filter((p) => p.risk === "low");
+      if (low.length > 1) return banner(`${low.length} low-risk items meet every guardrail. Approve them together, then spend your time on the rest.`, { label: `Approve ${low.length} low-risk items`, act: "approve-low" });
+      const p = needsMe()[0];
+      return p ? banner(`Start with ${esc(p.proposal_id)}: ${esc(p.summary)}.`, { label: "Jump to it", act: "goto-prop", id: p.proposal_id }) : banner("Nothing here needs you. See what else is on your list.", { label: "Back to Action center", href: "#actions" });
+    }
+    if (r === "budget") {
+      const cap = tasks.find((t) => t.pri === "urgent");
+      if (cap) return banner(esc(cap.title) + ".", cap.cta, "urgent");
+      const t = tasks.find((x) => x.id.startsWith("prop_") && /budget|pacing|curve/i.test(x.title + x.why));
+      return t ? banner(`A pacing fix is waiting: ${esc(t.title)}.`, { label: "Review it", act: "goto-prop", id: t.cta.id }) : "";
+    }
+    if (r === "report") return banner("Carry these learnings into your next launch: lead with the best channel and plan four creatives from day one.", { label: "Start a launch with these learnings", act: "launch-title", id: "9781250990066" });
+    if (r === "launch") return "";
+    if (r === "title") {
+      const c = campaignById(UI.titleCampaign); if (!c) return "";
+      const a = healthOf(c).reasons.find((x) => x.action);
+      return a ? banner(`${esc(a.text)}.`, actionBtn(a.action, c), a.sev === "crit" ? "urgent" : "") : "";
+    }
+    const top = tasks[0];
+    return top ? banner(esc(top.title) + ".", top.cta, top.pri === "urgent" ? "urgent" : "") : "";
+  }
+  function actionBtn(a, c) {
+    if (a.kind === "proposal") { const p = S.proposals.find((x) => x.key === a.key && (x.status === "pending" || x.status === "partially_approved")); return p ? { label: a.label, act: "goto-prop", id: p.proposal_id } : { label: a.label, href: "#approvals" }; }
+    if (a.kind === "report") return { label: a.label, act: "open-report", id: a.id };
+    const p = S.proposals.find((x) => x.campaign_id === c.id && (x.status === "pending" || x.status === "partially_approved"));
+    return p ? { label: a.label, act: "goto-prop", id: p.proposal_id } : { label: a.label, href: "#approvals" };
+  }
 
   // ---------------- PORTFOLIO ----------------
   function renderPortfolio() {
@@ -110,16 +308,16 @@
     <div class="grid g-main">
       <div class="stack">
         <div class="panel" data-tour="campaigns"><div class="panel-h"><h3>Live campaigns</h3><span class="muted small">Pacing compares spend with each title's publication-date curve, not a flat daily average.</span></div>
-          <div class="panel-b tbl-wrap"><table><thead><tr><th>Title</th><th>Phase</th><th>Spend vs. budget</th><th class="n">Forecast</th><th>Pacing</th><th class="n">Open items</th></tr></thead><tbody>
+          <div class="panel-b tbl-wrap"><table><thead><tr><th>Title</th><th>Health</th><th>Phase</th><th>Spend vs. budget</th><th class="n">Forecast</th><th>Pacing</th></tr></thead><tbody>
           ${aggs.map(({ c, a, t }) => {
-            const open = S.proposals.filter((p) => p.campaign_id === c.id && (p.status === "pending" || p.status === "partially_approved")).length;
             return `<tr class="click" data-act="open-title" data-id="${c.id}"><td><div class="tcell">${cover(t)}<div><b>${esc(t.title)}</b><span>${esc(E.imprintById(t.imprint).name)} · pub ${shortDate(t.pubDate)}</span></div></div></td>
+            <td>${healthBadge(healthOf(c))}</td>
             <td><span class="tag">${E.phaseOf(c, S.today)}</span></td>
             <td><div class="meter ${a.tier}" title="${pct(a.consumed)} spent; marker shows planned to date"><span style="width:${Math.min(100, a.consumed * 100)}%"></span><i style="left:${Math.min(100, a.plannedFrac * 100)}%"></i></div><div class="small muted num" style="margin-top:4px">${money(a.spent)} of ${money(c.budget)}</div></td>
             <td class="n">${money(a.forecast)}<div class="small muted">${signed(a.forecast / c.budget - 1)}</div></td>
-            <td>${pill(a.tier)}</td><td class="n">${open || "-"}</td></tr>`;
+            <td>${pill(a.tier)}</td></tr>`;
           }).join("")}
-          ${sched.map((c) => { const t = E.titleById(c.titleId); return `<tr><td><div class="tcell">${cover(t)}<div><b>${esc(t.title)}</b><span>${esc(E.imprintById(t.imprint).name)} · pub ${shortDate(t.pubDate)}</span></div></div></td><td><span class="tag">starts ${shortDate(c.start)}</span></td><td><div class="small muted num">${money(0)} of ${money(c.budget)}</div></td><td class="n">-</td><td>${pill("scheduled")}</td><td class="n">-</td></tr>`; }).join("")}
+          ${sched.map((c) => { const t = E.titleById(c.titleId); return `<tr><td><div class="tcell">${cover(t)}<div><b>${esc(t.title)}</b><span>${esc(E.imprintById(t.imprint).name)} · pub ${shortDate(t.pubDate)}</span></div></div></td><td>${healthBadge(healthOf(c))}</td><td><span class="tag">starts ${shortDate(c.start)}</span></td><td><div class="small muted num">${money(0)} of ${money(c.budget)}</div></td><td class="n">-</td><td>${pill("scheduled")}</td></tr>`; }).join("")}
           </tbody></table></div></div>
 
         <div class="panel"><div class="panel-h"><h3>Spend to date by platform</h3><span class="muted small">Platform-reported, live campaigns</span></div>
@@ -153,7 +351,7 @@
     }
     const rejectBox = rj ? `<div class="edit-box" style="flex-direction:column;align-items:stretch"><span class="small muted">Pick a reason. The Optimizer learns your imprint's preferences from these.</span><div class="tags">${["Evidence too thin", "Brand or author sensitivity", "Wait until after pub date", "Already handled", "Disagree with diagnosis"].map((tg) => `<button data-act="reject-tag" data-id="${p.proposal_id}" data-tag="${tg}" aria-pressed="${rj.includes(tg)}">${tg}</button>`).join("")}</div><div class="row"><button class="btn sm danger" data-act="reject-confirm" data-id="${p.proposal_id}" ${rj.length ? "" : "disabled"}>Reject proposal</button><button class="btn ghost sm" data-act="reject-cancel" data-id="${p.proposal_id}">Cancel</button></div></div>` : "";
     const statusPill = { pending: '<span class="pill neutral">Pending</span>', partially_approved: '<span class="pill watch">Partly approved</span>', executed: '<span class="pill ok">Executed</span>', rejected: '<span class="pill neutral">Rejected</span>', expired: '<span class="pill neutral">Expired</span>', blocked: '<span class="pill alert">Held by policy</span>' }[p.status];
-    return `<article class="prop ${p.status === "blocked" ? "blocked" : ""}" data-prop="${p.proposal_id}">
+    return `<article class="prop ${p.status === "blocked" ? "blocked" : ""} ${UI.flash === p.proposal_id ? "flash" : ""}" data-prop="${p.proposal_id}">
       <div class="prop-h"><div class="meta-row"><span class="mono">${p.proposal_id}</span><span>${esc(p.agent)}</span>${plat(p.platform)}<span class="risk ${p.risk}">${p.risk} risk</span>${statusPill}</div>
       <div class="small muted">${esc(t.title)} · ${esc(E.imprintById(t.imprint).name)}</div>
       <h4>${esc(p.summary)}</h4></div>
@@ -295,13 +493,18 @@
     ];
     const maxF = Math.log10(fun[0].v || 10);
     const log = S.proposals.concat(S.blocked).filter((p) => p.campaign_id === c.id);
+    const H = healthOf(c);
     return `<div class="view-head"><div><div class="eyebrow">Title dashboard</div><h1>${esc(t.title)}</h1><p>${esc(t.author)} · ${esc(E.imprintById(t.imprint).name)} · ${t.format} · ${esc(t.genre)}</p></div>
-      <label class="f" for="title-sel" style="min-width:260px">Title<select class="input" id="title-sel" data-change="title-sel">${options.map((o) => `<option value="${o.id}" ${o.id === c.id ? "selected" : ""}>${esc(E.titleById(o.titleId).title)}${o.status === "completed" ? " (completed)" : ""}</option>`).join("")}</select></label></div>
+      <button class="btn" data-act="mode" data-mode="titles">Switch title</button></div>
+    <div class="panel health-panel" data-tour="health"><div class="panel-b">
+      <div class="hp-score">${healthBadge(H, true)}<p class="small muted">Health rolls up pacing, creative fatigue, open decisions and alerts into one score.</p></div>
+      <ul class="hp-reasons">${H.reasons.map((x) => { const b = x.action ? actionBtn(x.action, c) : null; return `<li class="${x.sev}"><span>${esc(x.text)}</span>${b ? (b.href ? `<a class="btn sm" href="${b.href}">${esc(b.label)}</a>` : `<button class="btn sm" data-act="${b.act}" data-id="${b.id}">${esc(b.label)}</button>`) : ""}</li>`; }).join("")}</ul>
+    </div></div>
     <div class="grid" style="grid-template-columns:auto minmax(0,1fr);align-items:start" data-tour="title-head">
       <div>${cover(t, 110)}</div>
       <div class="stack">
         <dl class="meta-grid"><div><dt>ISBN</dt><dd class="mono">${t.isbn}</dd></div><div><dt>Pub date</dt><dd>${fmtDate(t.pubDate)} <span class="muted">(${dpub > 0 ? dpub + " days to go" : -dpub + " days since"})</span></dd></div><div><dt>BISAC</dt><dd>${esc(t.bisac)}</dd></div><div><dt>Comp titles</dt><dd>${t.comps.map(esc).join(", ")}</dd></div><div><dt>Audience</dt><dd>${t.ageBand}${t.flags.length ? ` <span class="tag">${t.flags.join(", ")} review</span>` : ""}</dd></div><div><dt>Campaign</dt><dd>${shortDate(c.start)} to ${shortDate(c.end)} · ${pill(c.status === "completed" ? "ok" : a.tier)}</dd></div></dl>
-        <div class="kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        <div class="kpis k4">
           <div class="kpi"><div class="lbl">Spend</div><div class="val num">${money(tot.spend)}</div><div class="sub">of ${money(c.budget)}</div></div>
           <div class="kpi"><div class="lbl">Qualified actions</div><div class="val num">${Math.round(tot.actions).toLocaleString()}</div><div class="sub">click-outs + Amazon orders</div></div>
           <div class="kpi"><div class="lbl">Cost per qualified action</div><div class="val num">$${tot.cpa.toFixed(2)}</div><div class="sub">blended, normalized</div></div>
@@ -394,7 +597,16 @@
         ${v.map((x) => `<div><span class="res ${x.ok ? "pass" : "fail"}" style="width:48px;flex:none">${x.ok ? "ok" : "diff"}</span><span style="flex:1">${plat(x.p)} ${esc(x.text)}</span>${x.ok ? "" : `<button class="btn sm" data-act="wiz-reapply" data-p="${x.p}">Re-apply setting</button>`}</div>`).join("")}
       </div><div class="prop-f"><a class="btn primary" href="#portfolio">See it in the portfolio</a><button class="btn ghost" data-act="wiz-reset">Start another launch</button></div></div>`;
     }
-    return `<div class="view-head"><div><div class="eyebrow">Launch</div><h1>Launch a campaign, title first</h1><p>Describe the campaign once. The Planner drafts a four-platform plan, the Builder creates it through each platform's official API, and nothing goes live until compliance passes and the right people approve.</p></div></div>${steps}${body}`;
+    const HINTS = [
+      "Pick the title you're promoting. Titles without a campaign can be selected; metadata fills in automatically.",
+      "Fill in five fields. The defaults are a sensible pre-order plan for this pub date, so you can usually just press Draft the plan.",
+      "Read the reasoning on the right, adjust any share if you disagree, and accept. Shares must add up to 100%.",
+      "Edit any copy that doesn't sound like the book, untick assets you don't want, then run the checks.",
+      "Fix anything marked FAIL. Each one has a suggested fix button, or use Apply all suggested fixes.",
+      "Each required approver signs off. Once everyone has, build and schedule the campaigns.",
+      "Fix any setting that came back different from the plan. Then you're done."
+    ];
+    return `<div class="view-head"><div><div class="eyebrow">Launch</div><h1>Launch a campaign, title first</h1><p>Describe the campaign once. The Planner drafts a four-platform plan, the Builder creates it through each platform's official API, and nothing goes live until compliance passes and the right people approve.</p></div></div>${steps}<div class="hint" data-tour="wiz-hint"><span class="nba-k">What to do here</span><span>${HINTS[W.step]}</span></div>${body}`;
   }
   after.launch = () => {
     const W = UI.wiz;
@@ -438,6 +650,7 @@
     const options = S.campaigns.filter((c) => c.status !== "scheduled");
     const c = campaignById(UI.reportCampaign) || options[0];
     const R = E.report(S, c);
+    if (c.status === "completed") UI.seenReports[c.id] = true;
     const t = R.title;
     const live = c.status === "live";
     return `<div class="view-head"><div><div class="eyebrow">Reporter</div><h1>End-of-campaign report</h1><p>Generated automatically when a flight ends, with no manual data pulls. In production it exports to PDF and slides.</p></div>
@@ -445,7 +658,7 @@
     <article class="report" data-tour="report">
       <header>${cover(t, 84)}<div class="stack" style="gap:6px;flex:1;min-width:220px"><div class="eyebrow" style="margin:0">${live ? "Interim report" : "Final report"} · ${esc(E.imprintById(t.imprint).name)}</div><h2 style="font-size:28px">${esc(t.title)}</h2><div class="muted">${esc(t.author)} · ${fmtDate(c.start)} to ${fmtDate(c.end)} · ${money(c.budget)} approved</div></div></header>
       <section><h3>Executive summary</h3><p class="lede">${esc(R.summary)}</p>${R.amazonLine ? `<p>${esc(R.amazonLine)}</p>` : ""}</section>
-      <section><h3>Goal vs. actual</h3><div class="kpis" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+      <section><h3>Goal vs. actual</h3><div class="kpis k4">
         <div class="kpi"><div class="lbl">Budget used</div><div class="val num">${pct(R.all.spend / c.budget, 1)}</div><div class="sub">${money(R.all.spend)}</div></div>
         <div class="kpi"><div class="lbl">Qualified actions</div><div class="val num">${Math.round(R.all.actions).toLocaleString()}</div><div class="sub">goal ${R.goal.toLocaleString()}</div></div>
         <div class="kpi"><div class="lbl">Cost per action</div><div class="val num">$${R.all.cpa.toFixed(2)}</div><div class="sub">plan $2.75</div></div>
@@ -478,11 +691,36 @@
     const r = E.decide(S, id, UI.role, "approve");
     if (!r.ok) return toast(r.reason);
     if (r.steps) UI.exec[id] = r.steps;
-    toast(r.status === "executed" ? "Approved and executed. Read-back verified." : `Approved. Waiting on ${r.waitingOn.map((x) => E.ROLES[x]).join(", ")}.`);
+    toast(r.status === "executed" ? "Approved and executed. Read-back verified." : `Approved. Waiting on ${r.waitingOn.map((x) => E.ROLES[x]).join(", ")}.`, nextHint());
     render();
   }
+  function nextHint() {
+    const t = buildTasks().find((x) => x.cta);
+    return t ? { label: "Next: " + (t.short || t.title), href: "#actions" } : { label: "All clear. Back to Action center", href: "#actions" };
+  }
+  after.approvals = () => {
+    if (!UI.flash) return;
+    const el = document.querySelector(`[data-prop="${UI.flash}"]`);
+    if (el) el.scrollIntoView({ block: "start", behavior: "instant" });
+    const id = UI.flash; UI.flash = null;
+    setTimeout(() => { const e2 = document.querySelector(`[data-prop="${id}"]`); if (e2) e2.classList.remove("flash"); }, 2400);
+  };
+  function nav(hash) { closeDrawer(); if (location.hash === "#" + hash) render(); else location.hash = hash; }
+  function closeDrawer() { document.body.classList.remove("drawer-open"); }
   const ACT = {
-    "open-title": (d) => { UI.titleCampaign = d.id; location.hash = "title"; },
+    "open-title": (d) => { UI.titleCampaign = d.id; UI.mode = "titles"; nav("title"); },
+    mode: (d) => {
+      UI.mode = d.mode;
+      if (UI.collapsed) { UI.collapsed = false; store.set("matloc-rail", "open"); }
+      const home = MODES[d.mode].home;
+      if (home) nav(home); else { render(); document.body.classList.add("drawer-open"); const q = $("#title-q"); if (q) q.focus(); }
+    },
+    "goto-prop": (d) => { UI.flash = d.id; nav("approvals"); },
+    nudge: (d) => { UI.nudged[d.id] = true; const p = S.proposals.find((x) => x.proposal_id === d.id); const w = p.requires_approval_from.filter((r) => !p.approvals.includes(r)).map((r) => E.ROLES[r]); S.audit.unshift({ ts: S.today + "T09:15:00Z", actor: "human", who: E.ROLES[UI.role], action: "Sent reminder to " + w.join(", "), entity: d.id, before: "-", after: "Reminder sent (email + Slack)" }); toast(`Reminder sent to ${w.join(" and ")}.`); render(); },
+    "launch-title": (d) => { UI.wiz = freshWizard(); UI.wiz.titleId = d.id; UI.wiz.step = 1; UI.mode = "launch"; nav("launch"); },
+    "open-report": (d) => { UI.reportCampaign = d.id; UI.seenReports[d.id] = true; nav("report"); },
+    "approve-low": () => { const low = needsMe().filter((p) => p.risk === "low"); let n = 0; low.forEach((p) => { const r = E.decide(S, p.proposal_id, UI.role, "approve"); if (r.ok) { n++; if (r.steps) UI.exec[p.proposal_id] = r.steps; } }); toast(`Approved and executed ${n} low-risk item${n === 1 ? "" : "s"}. Read-back verified.`, nextHint()); render(); },
+    "wiz-reset-go": () => { if (UI.wiz.launched) UI.wiz = freshWizard(); UI.mode = "launch"; nav("launch"); },
     "dismiss-alert": (d) => { const a = S.alerts.find((x) => x.id === d.id); if (a) a.open = false; render(); },
     approve: (d) => approve(d.id),
     edit: (d) => { const p = S.proposals.find((x) => x.proposal_id === d.id); UI.edit[d.id] = p.action_type === "budget_shift" ? { per_day: p.params.per_day } : { pct: p.params.pct }; render(); },
@@ -520,8 +758,23 @@
     const fn = ACT[el.dataset.act];
     if (fn) { ev.preventDefault(); fn(el.dataset, el, ev); }
   });
+  document.addEventListener("click", (ev) => {
+    if (ev.target.closest("#rail-toggle")) { UI.collapsed = !UI.collapsed; store.set("matloc-rail", UI.collapsed ? "collapsed" : "open"); renderRail(); }
+    if (ev.target.closest("#menu-btn")) document.body.classList.toggle("drawer-open");
+    if (ev.target.closest("#scrim")) closeDrawer();
+    const chip = ev.target.closest("#next-chip");
+    if (chip && chip.dataset.task) {
+      const t = buildTasks().find((x) => x.id === chip.dataset.task);
+      if (!t) return;
+      if (t.cta.act === "approve") ACT["goto-prop"]({ id: t.cta.id });
+      else if (t.cta.href) nav(t.cta.href.slice(1));
+      else ACT[t.cta.act]({ id: t.cta.id });
+    }
+    if (ev.target.closest(".rail a[href]") && !ev.target.closest("[data-act]")) closeDrawer();
+  });
   document.addEventListener("input", (ev) => {
     const el = ev.target;
+    if (el.id === "title-q") { UI.titleQuery = el.value; const pos = el.selectionStart; renderRail(); const q = $("#title-q"); q.focus(); q.setSelectionRange(pos, pos); return; }
     if (el.dataset.copy) { UI.wiz.copy[el.dataset.copy] = el.value; const lim = E.LIMITS[el.dataset.copy].max; const cn = $("#cnt-" + el.dataset.copy); cn.textContent = el.value.length + "/" + lim; cn.classList.toggle("over", el.value.length > lim); }
   });
   document.addEventListener("change", (ev) => {
@@ -537,12 +790,14 @@
     if (el.dataset.split) { UI.wiz.splitEdit[el.dataset.split] = Math.max(0, +el.value); render(); }
     if (el.dataset.asset) { const a = UI.wiz.assets; el.checked ? a.push(el.dataset.asset) : a.splice(a.indexOf(el.dataset.asset), 1); }
   });
-  window.addEventListener("hashchange", render);
+  window.addEventListener("hashchange", () => { closeDrawer(); render(); });
+  UI.collapsed = store.get("matloc-rail") === "collapsed";
 
   // ---------------- public API for the guided tour ----------------
   window.APP = {
     render, get S() { return S; }, UI, ACT, toast,
-    reset() { S = E.makeState(); UI.wiz = freshWizard(); UI.edit = {}; UI.reject = {}; UI.exec = {}; UI.role = "imprint_marketer"; UI.budgetCampaign = "cmp_salt"; UI.titleCampaign = "cmp_glass"; UI.reportCampaign = "cmp_ninefold"; UI.expanded = { cmp_salt: true }; render(); },
+    reset() { S = E.makeState(); UI.wiz = freshWizard(); UI.edit = {}; UI.reject = {}; UI.exec = {}; UI.role = "imprint_marketer"; UI.budgetCampaign = "cmp_salt"; UI.titleCampaign = "cmp_glass"; UI.reportCampaign = "cmp_ninefold"; UI.expanded = { cmp_salt: true }; UI.nudged = {}; UI.seenReports = {}; UI.mode = null; UI.titleQuery = ""; render(); },
+    buildTasks: () => buildTasks(),
     setRole(r) { UI.role = r; render(); },
     approve,
     findProposal(key) { return S.proposals.concat(S.blocked).find((p) => p.key === key); },

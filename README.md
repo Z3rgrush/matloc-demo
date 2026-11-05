@@ -18,21 +18,28 @@ Run the engine tests with `npm test` (Node 20+).
 
 ## What the demo covers
 
+The left menu keeps **Action center** and **Approvals** pinned, then offers three modes: **Reporting** (portfolio, budget and pacing, reports, audit log), **Launch** (new campaign, titles ready to launch, scheduled campaigns) and **Titles** (search any title's dashboard, sorted by health). It collapses to icons and becomes a drawer on phones.
+
 | Screen | What it shows | Scoping plan |
 |---|---|---|
+| **Action center** (home) | An ordered to-do list built from live state: safety stops first, then decisions with the agent's recommendation, reminders, launches due, reports to read. Title health for every live title | §3.1 G2, G5, §7.7 |
 | **Portfolio** | Live budget, spend, forecast, approvals waiting, alerts, what the agents did overnight | §7.6 Portfolio, §3.1 G2 |
 | **Approvals** | Structured proposals (evidence, impact, risk, rollback, expiry), approve / edit / reject with reasons / snooze, multi-role approval chains, proposals held by guardrails | §7.3, §7.4 |
 | **Budget & pacing** | Imprint → title → platform budgets, pacing against the pub-date curve, forecast, guardrail tiers, emergency auto-pause, kill switch, reconciliation | §7.7 |
-| **Title dashboard** | Funnel with honest source labels, native vs. normalized metrics, creative leaderboard with fatigue, optimization log | §7.6, §8 |
+| **Title dashboard** | Health score (0 to 100) with plain-language reasons and a fix button for each, funnel with honest source labels, native vs. normalized metrics, creative leaderboard with fatigue, optimization log | §7.6, §8 |
 | **Launch a campaign** | 7-step title-first wizard: metadata, brief, Planner draft, copy with limits, blocking compliance checks, threshold approvals, post-launch read-back | §7.5, §10.1 |
 | **Campaign report** | Auto-generated end-of-campaign report with caveats and next-time plan | §7.6, §3.1 G6 |
 | **Audit log** | Every approval, edit, execution and safety stop, with before/after state | §3.1 G7, §10.2 |
+
+**Guidance everywhere:** the top bar always shows the single next step, each screen has a "Next best action" banner, the launch wizard explains what to do on each step, and every confirmation says what to do next.
+
+**Title health** (`titleHealth()` in `js/engine.js`) starts at 100 and deducts for a paused platform (35), a platform 20%+ off its curve (22), a fatigued creative (12), a platform on watch (6) and each open decision (4). 80+ is Healthy, 60 to 79 Needs attention, under 60 At risk.
 
 The **Advance one day** button runs a simulated day: connectors "pull" spend, the Budget steward and Monitor check pacing and caps, proposals expire, and executed changes get measured outcomes.
 
 ## Guided walkthrough
 
-- **In-app tour** (`js/tour.js`): 27 steps that drive the live demo, with a "Do it for me" button on every action so a presenter can run the whole story with one hand. Each step cites the scoping-plan section it demonstrates.
+- **In-app tour** (`js/tour.js`): 32 steps that drive the live demo, with a "Do it for me" button on every action so a presenter can run the whole story with one hand. Each step cites the scoping-plan section it demonstrates.
 - **Presenter script** ([docs/WALKTHROUGH.md](docs/WALKTHROUGH.md)): a 10-minute talk track, what to click, what to say, and likely questions.
 
 ## How it's built

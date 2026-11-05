@@ -1,6 +1,6 @@
 # MATLOC demo: guided walkthrough
 
-A 10-minute presenter script for the MATLOC demo. It follows the in-app guided tour step for step, so you can either press **Guided tour** and let it drive, or click through yourself using the cues below.
+A 10 to 12 minute presenter script for the MATLOC demo. It follows the in-app guided tour step for step, so you can either press **Guided tour** and let it drive, or click through yourself using the cues below.
 
 **Before you start**
 
@@ -12,57 +12,67 @@ A 10-minute presenter script for the MATLOC demo. It follows the in-app guided t
 
 ---
 
+## Act 0: Your day starts with a to-do list (about 1 minute)
+
+| # | Screen | Do | Say |
+|---|---|---|---|
+| 1 | Action center | Start the tour | "MATLOC is one toolkit for four ad platforms. It launches, monitors, recommends, and only executes what a person approves." |
+| 2 | Action center tasks | Point at item 1 and its green recommendation line | "Overnight monitoring becomes a short ordered list. Each item says why, how long, and what the agent recommends, with one button." |
+| 3 | Title health | Point at the scores | "Every live title gets a health score. Click one to see the reasons and the fix for each." |
+| 4 | Left menu | Click Reporting, Launch, Titles; collapse with the arrow | "Pick what you're doing: reporting, launching, or a specific title. Titles are sorted worst health first." |
+| 5 | Next step chip | Point at the top bar | "Wherever you are, the next most important thing is one click away." |
+
 ## Act 1: Stop watching spend (about 3 minutes)
 
 | # | Screen | Do | Say |
 |---|---|---|---|
-| 1 | Portfolio | Start the tour | "MATLOC is one toolkit for four ad platforms. It launches, monitors, recommends, and only executes what a person approves." |
-| 2 | Portfolio KPIs | Point at the five tiles | "This replaces logging into Meta, Google, TikTok and Amazon to check spend. $215k live across four titles; 54% spent; forecast lands within 1% of budget." |
-| 3 | Live campaigns | Point at the meters and the black tick | "The tick is where the plan expected us to be today. We pace against each title's publication-date curve, so launch week is supposed to spend fast. Two titles need attention." |
-| 4 | What the agents did | Read two feed lines | "Overnight, the Budget steward pulled hourly spend and reconciled October; the Monitor flagged two pacing issues and one creative fatigue signal; the Optimizer drafted six proposals and the policy engine held one back." |
-| 5 | Budget & pacing: hierarchy | Point at Salt and Signal, expanded | "Every level of the budget has approved, planned, spent, forecast and cap headroom. TikTok on this title is 22% ahead of its curve." |
-| 6 | Pacing chart | Hover across launch week | "Grey is the plan, black is actual, dashed is the forecast. The pink band is launch week." |
-| 7 | Guardrails | Point at the three tiers | "Watch goes in the digest. Alert notifies the owner. Hard cap pauses automatically. The automatic stop can only reduce spend, never raise it or move it." |
-| 8 | Simulate spike | **Do it for me** | "Let's say TikTok spends three times its plan overnight." |
-| 9 | Hierarchy after spike | Point at "Paused at cap" and the red headroom | "Caught and paused. Owner notified, logged, and a resume proposal is already waiting. Nobody had to be watching." |
+| 6 | Portfolio KPIs | Point at the five tiles | "This replaces logging into Meta, Google, TikTok and Amazon to check spend. $215k live across four titles; 54% spent; forecast lands within 1% of budget." |
+| 7 | Live campaigns | Point at the meters and the black tick | "The tick is where the plan expected us to be today. We pace against each title's publication-date curve, so launch week is supposed to spend fast. Two titles need attention." |
+| 8 | What the agents did | Read two feed lines | "Overnight, the Budget steward pulled hourly spend and reconciled October; the Monitor flagged two pacing issues and one creative fatigue signal; the Optimizer drafted six proposals and the policy engine held one back." |
+| 9 | Budget & pacing: hierarchy | Point at Salt and Signal, expanded | "Every level of the budget has approved, planned, spent, forecast and cap headroom. TikTok on this title is 22% ahead of its curve." |
+| 10 | Pacing chart | Hover across launch week | "Grey is the plan, black is actual, dashed is the forecast. The pink band is launch week." |
+| 11 | Guardrails | Point at the three tiers | "Watch goes in the digest. Alert notifies the owner. Hard cap pauses automatically. The automatic stop can only reduce spend, never raise it or move it." |
+| 12 | Simulate spike | **Do it for me** | "Let's say TikTok spends three times its plan overnight." |
+| 13 | Hierarchy after spike | Point at "Paused at cap" and the red headroom | "Caught and paused. Owner notified, logged, and a resume proposal is already waiting. Nobody had to be watching." |
 
 ## Act 2: The agent proposes, the human disposes (about 3 minutes)
 
 | # | Screen | Do | Say |
 |---|---|---|---|
-| 10 | Approvals | Scroll the queue | "Every proposal has the same shape: evidence, expected impact with a confidence level, risk, rollback, who has to approve, and an expiry so we never act on stale data." |
-| 11 | Fatigue proposal | **Approve it** | "The cover-led Meta ad's click-through dropped while frequency rose. Low risk: pause it, rotate in a pre-approved carousel. The marketer can approve alone." |
-| 12 | Same card | Point at the execution log | "Approval goes to the execution engine, not the AI. It re-checks the rules, makes the change with an idempotency key, reads it back to confirm, and schedules an outcome check." |
-| 13 | Budget-shift proposal | Show the blocked edit, then **Approve the original amount** | "Marketers can edit before approving. I tripled the amount and the policy engine blocked it live, because a step that big resets the platform's learning phase." |
-| 14 | Held by guardrails | Point at the dashed card | "The Optimizer wanted to raise Meta 60%. It failed three hard rules and never reached anyone. The AI has no write access to any ad platform." |
-| 15 | YA bid proposal | **Approve as all three roles** (or switch roles in the top bar yourself) | "A 10% bid change is normally low risk, but this is a YA title, so it escalates to high and needs a director and a compliance reviewer." |
+| 14 | Approvals | Scroll the queue | "Every proposal has the same shape: evidence, expected impact with a confidence level, risk, rollback, who has to approve, and an expiry so we never act on stale data." |
+| 15 | Fatigue proposal | **Approve it** | "The cover-led Meta ad's click-through dropped while frequency rose. Low risk: pause it, rotate in a pre-approved carousel. The marketer can approve alone." |
+| 16 | Same card | Point at the execution log | "Approval goes to the execution engine, not the AI. It re-checks the rules, makes the change with an idempotency key, reads it back to confirm, and schedules an outcome check." |
+| 17 | Budget-shift proposal | Show the blocked edit, then **Approve the original amount** | "Marketers can edit before approving. I tripled the amount and the policy engine blocked it live, because a step that big resets the platform's learning phase." |
+| 18 | Held by guardrails | Point at the dashed card | "The Optimizer wanted to raise Meta 60%. It failed three hard rules and never reached anyone. The AI has no write access to any ad platform." |
+| 19 | YA bid proposal | **Approve as all three roles** (or switch roles in the top bar yourself) | "A 10% bid change is normally low risk, but this is a YA title, so it escalates to high and needs a director and a compliance reviewer." |
 
 ## Act 3: Measure honestly (about 1 minute)
 
 | # | Screen | Do | Say |
 |---|---|---|---|
-| 16 | Title dashboard: funnel | Point at the hatched last row | "Most book sales happen at retailers we can't see. Every number is labeled by source, and retail sales outside Amazon are shown as unknown. We measure those with BookScan lift and holdouts." |
-| 17 | Creative leaderboard | Point at the red sparkline | "Every creative's CTR trend is tracked. The ad we just paused shows the fatigue curve." |
+| 20 | Title dashboard: health | Point at the score and the reasons | "Salt and Signal is at risk. Each reason has the button that fixes it." |
+| 21 | Title dashboard: funnel | Point at the hatched last row | "Most book sales happen at retailers we can't see. Every number is labeled by source, and retail sales outside Amazon are shown as unknown. We measure those with BookScan lift and holdouts." |
+| 22 | Creative leaderboard | Point at the red sparkline | "Every creative's CTR trend is tracked. The ad we just paused shows the fatigue curve." |
 
 ## Act 4: Launch a title in minutes (about 2 minutes)
 
 | # | Screen | Do | Say |
 |---|---|---|---|
-| 18 | Launch: titles | **Pick The Orchard at Low Tide** | "Launches start from the title. Metadata comes from the feed." |
-| 19 | Brief | **Draft the plan** | "The marketer types objective, budget, dates and destination. That's it." |
-| 20 | Plan | Point at "Why this plan" and the curve | "A four-platform split with its reasoning written out, outcome ranges, current platform structures, a pub-date pacing curve and UTMs. All editable." |
-| 21 | Copy | **Run compliance checks** | "The drafts include mistakes a busy marketer could miss: an unsubstantiated #1 claim, a headline over Google's limit, a quote not yet cleared." |
-| 22 | Compliance | **Apply all fixes** | "Failures block the launch. Each comes with a fix, like swapping in a claim we can source." |
-| 23 | Approvals | **Sign off and build** | "Over $25k, so the director signs too. Campaigns are created paused or scheduled." |
-| 24 | Verification | Click **Re-apply setting** | "Every setting is read back. Meta's placements came back wrong; one click fixes it and it's logged." |
+| 23 | Launch: titles | **Pick The Orchard at Low Tide** | "Launches start from the title. Metadata comes from the feed." |
+| 24 | Brief | **Draft the plan** | "The marketer types objective, budget, dates and destination. That's it." |
+| 25 | Plan | Point at "Why this plan" and the curve | "A four-platform split with its reasoning written out, outcome ranges, current platform structures, a pub-date pacing curve and UTMs. All editable." |
+| 26 | Copy | **Run compliance checks** | "The drafts include mistakes a busy marketer could miss: an unsubstantiated #1 claim, a headline over Google's limit, a quote not yet cleared." |
+| 27 | Compliance | **Apply all fixes** | "Failures block the launch. Each comes with a fix, like swapping in a claim we can source." |
+| 28 | Approvals | **Sign off and build** | "Over $25k, so the director signs too. Campaigns are created paused or scheduled." |
+| 29 | Verification | Click **Re-apply setting** | "Every setting is read back. Meta's placements came back wrong; one click fixes it and it's logged." |
 
 ## Act 5: Close the loop (about 1 minute)
 
 | # | Screen | Do | Say |
 |---|---|---|---|
-| 25 | Campaign report | Scroll | "When a flight ends the report writes itself: summary, goal vs. actual, platform efficiency, best and worst creative, what we changed and what it did, caveats in plain English, and a plan for next time." |
-| 26 | Audit log | Filter to Human, then System | "Everything we did in the last ten minutes is here with before and after state." |
-| 27 | Wrap-up | | "The rules, the math, the approval chains and the checks are real code running now. The platforms and the AI reasoning are simulated. Next step is Phase 0: discovery and platform access applications." |
+| 30 | Campaign report | Scroll | "When a flight ends the report writes itself: summary, goal vs. actual, platform efficiency, best and worst creative, what we changed and what it did, caveats in plain English, and a plan for next time." |
+| 31 | Audit log | Filter to Human, then System | "Everything we did in the last ten minutes is here with before and after state." |
+| 32 | Wrap-up | | "The rules, the math, the approval chains and the checks are real code running now. The platforms and the AI reasoning are simulated. Next step is Phase 0: discovery and platform access applications." |
 
 ---
 

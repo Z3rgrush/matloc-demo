@@ -8,24 +8,27 @@
 <meta name="description" content="Demo of the Macmillan Ad Toolkit: an approval-gated advertising agent for book imprints across Meta, Google, TikTok and Amazon Ads.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <div class="shell">
-  <aside class="rail">
-    <div class="brand"><div class="brand-mark" aria-hidden="true"></div><div><b>MATLOC</b><span>Macmillan Ad Toolkit<br>Launch · Optimize · Convert</span></div></div>
-    <nav class="nav" id="nav" aria-label="Workspaces"></nav>
-    <div class="rail-foot">
-      <span class="demo-flag">Demo build · fictional titles and data</span>
-      <span>Agents: Planner, Builder, Budget steward, Monitor, Optimizer, Reporter, Platform watcher</span>
+  <aside class="rail" id="rail" data-tour="rail" aria-label="Main menu">
+    <div class="rail-top">
+      <a class="brand" href="#actions" aria-label="MATLOC home"><span class="brand-mark" aria-hidden="true">M</span><span class="brand-text"><b>MATLOC</b><span>Macmillan Ad Toolkit</span></span></a>
+      <button class="rail-toggle" id="rail-toggle" aria-label="Collapse menu" aria-expanded="true"></button>
     </div>
+    <div class="rail-body" id="rail-body"></div>
+    <div class="rail-foot"><span class="demo-flag">Demo · fictional titles and data</span></div>
   </aside>
+  <div class="scrim" id="scrim" aria-hidden="true"></div>
   <div class="main">
     <header class="bar">
+      <button class="btn sm ghost menu-btn" id="menu-btn" aria-label="Open menu"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
       <div class="clock" data-tour="clock"><span class="muted small">Today</span><span class="num" id="clock"></span></div>
       <button class="btn sm" data-act="advance" data-tour="advance" title="Run one simulated day: pull spend, check pacing, draft proposals">Advance one day</button>
       <span class="pill alert" id="kill" hidden>Kill switch on</span>
+      <button class="next-chip" id="next-chip" data-tour="next-chip"></button>
       <span class="spacer"></span>
       <label class="role" for="role" data-tour="role">Acting as
         <select id="role">

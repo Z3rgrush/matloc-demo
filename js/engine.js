@@ -763,7 +763,38 @@
     };
   }
 
+  // ---------- TITLE HEALTH ----------
+  // One score per campaign that rolls up pacing, creative fatigue, open decisions and alerts.
+  // Each reason carries the action that fixes it, so the UI can always offer a next step.
+  function titleHealth(s, c) {
+    const t = titleById(c.titleId);
+    const reasons = [];
+    let score = 100;
+    if (c.status === "scheduled") return { score: 100, status: "scheduled", label: "Scheduled", reasons: [{ sev: "info", text: `Starts ${c.start}. All settings verified.` }] };
+    if (c.status === "completed") return { score: 100, status: "done", label: "Completed", reasons: [{ sev: "info", text: "Flight ended. Report ready.", action: { kind: "report", id: c.id, label: "Read the report" } }] };
+    const agg = campaignPacing(s, c);
+    agg.rows.forEach((r) => {
+      const tier = rowTier(s, r);
+      const name = D.PLATFORMS[r.platform].name;
+      if (tier === "capped") { score -= 35; reasons.push({ sev: "crit", text: `${name} paused at its hard cap`, action: { kind: "proposal", key: "resume_" + c.id + r.platform, label: "Decide on resume" } }); }
+      else if (tier === "alert") { score -= 22; reasons.push({ sev: "warn", text: `${name} is ${Math.round(Math.abs(r.ratio - 1) * 100)}% ${r.ratio > 1 ? "ahead of" : "behind"} its pacing curve`, action: { kind: "approvals", id: c.id, label: "See the fix" } }); }
+      else if (tier === "watch") { score -= 6; reasons.push({ sev: "info", text: `${name} is drifting from plan (watch)` }); }
+    });
+    c.creatives.filter((cr) => cr.status === "active").forEach((cr) => {
+      const st = creativeStats(c, cr);
+      if (st.series.length >= 4 && st.ctrDrop > 0.25) { score -= 12; reasons.push({ sev: "warn", text: `"${cr.name}" is fatigued (CTR ${Math.round(-st.ctrDrop * 100)}%)`, action: { kind: "approvals", id: c.id, label: "Rotate creative" } }); }
+    });
+    const pend = s.proposals.filter((p) => p.campaign_id === c.id && (p.status === "pending" || p.status === "partially_approved"));
+    if (pend.length) { score -= 4 * pend.length; reasons.push({ sev: "info", text: `${pend.length} decision${pend.length > 1 ? "s" : ""} waiting in the approval queue`, action: { kind: "approvals", id: c.id, label: "Review" } }); }
+    if (t.flags.includes("minors")) reasons.push({ sev: "info", text: "YA title: changes route to compliance review" });
+    score = clamp(Math.round(score), 0, 100);
+    const status = score >= 80 ? "healthy" : score >= 60 ? "attention" : "risk";
+    if (!reasons.length) reasons.push({ sev: "good", text: "Pacing on plan, creative fresh, nothing waiting on you" });
+    return { score, status, label: { healthy: "Healthy", attention: "Needs attention", risk: "At risk" }[status], reasons };
+  }
+
   const api = {
+    titleHealth,
     DEFAULT_SETTINGS, ROLES, LIMITS, addDays, daysBetween, flightDates, curveWeight, phaseOf, plannedDaily,
     makeState: () => { const s = makeState(); seedAlerts(s); return s; },
     platformPacing, campaignPacing, rowTier, totals, windowStats, creativeStats,
