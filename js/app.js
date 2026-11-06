@@ -17,7 +17,7 @@
   if (!S || !S.campaigns) S = E.makeState();
   const save = () => store.set(KEY, JSON.stringify(S));
 
-  const UI = { rep: "active", launchQ: "", titleQ: "", launch: null, playbook: {}, spiked: !!S.spiked };
+  const UI = { openSugg: {}, rep: "active", launchQ: "", titleQ: "", launch: null, playbook: {}, spiked: !!S.spiked };
 
   // ---------------- helpers ----------------
   const $ = (sel, el = document) => el.querySelector(sel);
@@ -105,26 +105,35 @@
   }
 
   // ---------------- CAMPAIGN ----------------
+  // Collapsible suggestion: a one-line headline that expands to evidence and actions.
+  function sugg(id, tag, title, meta, body, attrs = "") {
+    return `<details class="sugg" data-sid="${id}" ${attrs}${UI.openSugg[id] ? " open" : ""}><summary><span class="sum-tag">${tag}</span><span class="sum-title">${esc(title)}</span><span class="sum-meta">${meta}</span><span class="chev" aria-hidden="true"></span></summary><div class="sugg-body">${body}</div></details>`;
+  }
   function propCard(p, i, withCampaign) {
     const nr = nextRole(p);
     const partial = p.status === "partially_approved";
-    return `<article class="card" data-prop="${p.proposal_id}" data-key="${p.key || ""}">
-      <div class="meta"><span class="tag${p.risk === "high" ? " signal" : ""}">${p.risk} risk</span><span>${String(i + 1).padStart(2, "0")} · ${esc(p.agent || "Optimizer")}${withCampaign === true ? " · " + esc(cname(campaignById(p.campaign_id))) : ""}</span><span>· expires ${fmt(p.expires_at)}</span></div>
-      <h3>${esc(p.summary)}</h3>
+    const body = `<div class="meta">${esc(p.agent || "Optimizer")}${withCampaign === true ? " · " + esc(cname(campaignById(p.campaign_id))) + " campaign" : ""} · expires ${fmt(p.expires_at)}</div>
       <ul class="why">${p.evidence.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
       <div class="impact"><div><b>Expected</b>${esc(p.expected_impact.estimate)} ${esc(p.expected_impact.metric)}</div><div><b>Confidence</b>${esc(p.expected_impact.confidence)}</div><div><b>If it doesn't work</b>${esc(p.rollback)}</div></div>
       ${partial ? `<div class="small">Approved by ${p.approvals.map((r) => E.ROLES[r]).join(", ")}. This one also needs ${esc(E.ROLES[nr])}.</div>` : ""}
       <div class="btns"><button class="btn solid" data-act="approve" data-id="${p.proposal_id}">${nr === "imprint_marketer" ? "Approve" : "Approve as " + esc(E.ROLES[nr])}</button>
-        <button class="btn" data-act="snooze" data-id="${p.proposal_id}">Not now</button><button class="btn" data-act="dismiss" data-id="${p.proposal_id}">Dismiss</button></div></article>`;
+        <button class="btn" data-act="snooze" data-id="${p.proposal_id}">Not now</button><button class="btn" data-act="dismiss" data-id="${p.proposal_id}">Dismiss</button></div>`;
+    return sugg(p.proposal_id, `<span class="tag${p.risk === "high" ? " signal" : ""}">${p.risk} risk</span>`, p.summary, partial ? "Needs one more sign-off" : "Waiting on you", body, `data-prop="${p.proposal_id}" data-key="${p.key || ""}"`);
   }
   function doneCard(p) {
-    return `<article class="card done" data-prop="${p.proposal_id}"><span class="chk" aria-hidden="true">✓</span><div><div>${esc(p.summary)}</div>
-      <div class="small muted">Applied ${fmt(p.executed_at)} and read back from ${p.platform.includes("→") ? "both platforms" : pname(p.platform)}. ${p.outcome ? "Result: " + esc(p.outcome) + "." : "Argus measures the result on " + fmt(p.outcome_due) + "."}</div></div></article>`;
+    const body = `<p class="small">Applied ${fmt(p.executed_at)} and read back from ${p.platform.includes("→") ? "both platforms" : pname(p.platform)}. ${p.outcome ? "Result: " + esc(p.outcome) + "." : "Argus measures the result on " + fmt(p.outcome_due) + "."}</p>`;
+    return sugg(p.proposal_id, '<span class="tag solid">✓ Done</span>', p.summary, "Applied and verified", body, `data-prop="${p.proposal_id}"`);
   }
   function heldCard(p) {
-    return `<article class="card quiet held"><div class="meta"><span class="tag">Held by guardrails</span><span>Never reached anyone's queue</span></div>
-      <h3>${esc(p.summary)}</h3><ul class="why">${p.policy.errors.map((e) => `<li>${esc(e)}</li>`).join("")}</ul></article>`;
+    const body = `<p class="small muted">Never reached anyone's queue. The policy engine blocked it:</p><ul class="why">${p.policy.errors.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>`;
+    return sugg(p.proposal_id, '<span class="tag">Held</span>', p.summary, "Blocked by guardrails", body, 'data-held="1"');
   }
+  function nextCard(k, text, from) {
+    const on = UI.playbook[k];
+    const body = `<p class="small muted">From the Reporter${from ? ", based on the ended " + esc(from) + " campaign" : ""}.</p><div class="btns"><button class="btn${on ? "" : " solid"}" data-act="playbook" data-k="${k}">${on ? "✓ Added to the imprint playbook" : "Add to playbook"}</button></div>`;
+    return sugg("nt_" + k, `<span class="tag${on ? " good" : ""}">${on ? "✓ In playbook" : "Next time"}</span>`, text, on ? "Added" : "Lesson learned", body);
+  }
+
   function platformTable(c) {
     const agg = E.campaignPacing(S, c);
     const rows = agg.rows.map((r) => {
@@ -167,7 +176,7 @@
       const r = E.report(S, c);
       sugg = `<div class="sec-head"><h2 class="sec">What happened</h2></div><div class="card"><p style="font-size:18px">${esc(r.summary)}</p>${r.amazonLine ? `<p class="muted">${esc(r.amazonLine)}</p>` : ""}</div>
         <div class="sec-head"><h2 class="sec">Suggestions for next time</h2><span class="count solid">${r.next.length}</span></div>
-        <div class="cards" data-tour="next-time">${r.next.map((n, i) => { const k = c.id + i, on = UI.playbook[k]; return `<article class="card"><div class="meta"><span>${String(i + 1).padStart(2, "0")} · Reporter</span></div><h3>${esc(n)}</h3><div class="btns"><button class="btn${on ? "" : " solid"}" data-act="playbook" data-k="${k}">${on ? "✓ Added to the imprint playbook" : "Add to playbook"}</button></div></article>`; }).join("")}</div>
+        <div class="cards" data-tour="next-time">${r.next.map((n, i) => nextCard(c.id + i, n)).join("")}</div>
         <details class="card quiet" style="margin-top:14px"><summary class="small up">How to read these numbers</summary><ul class="why">${r.caveats.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>`;
     }
     return `${top("reporting")}<div class="row-flex" style="margin-bottom:18px">${back("#reporting", "Reporting center")}<a class="btn sm" href="#title/${t.id}">Title reporting →</a></div>
@@ -409,9 +418,9 @@
     const done = S.proposals.filter((p) => cs.some((c) => c.id === p.campaign_id) && p.status === "executed");
     const held = S.blocked.filter((p) => cs.some((c) => c.id === p.campaign_id));
     const nextTime = ended.flatMap((c) => E.report(S, c).next.map((n, i) => ({ c, n, k: c.id + i })));
-    const suggestions = open.map((p, i) => propCard(p, i, true)).join("")
-      + nextTime.map((x, i) => { const on = UI.playbook[x.k]; return `<article class="card"><div class="meta"><span class="tag">Next time</span><span>${String(open.length + i + 1).padStart(2, "0")} · Reporter · from the ended ${esc(cname(x.c).toLowerCase())} campaign</span></div><h3>${esc(x.n)}</h3><div class="btns"><button class="btn${on ? "" : " solid"}" data-act="playbook" data-k="${x.k}">${on ? "✓ Added to the imprint playbook" : "Add to playbook"}</button></div></article>`; }).join("")
-      + done.map(doneCard).join("") + held.map(heldCard).join("");
+    // The landing page shows three suggestions: decisions first, then recent changes, then lessons.
+    const items = open.map((p, i) => propCard(p, i, true)).concat(done.map(doneCard), nextTime.map((x) => nextCard(x.k, x.n, cname(x.c).toLowerCase()))).slice(0, 3);
+    const suggestions = items.join("");
 
     const order = { live: 0, scheduled: 1, completed: 2 };
     const campRows = all.slice().sort((a, b) => order[a.c.status] - order[b.c.status] || (a.c.start < b.c.start ? 1 : -1)).map(({ c, agg, res }) => {
@@ -438,7 +447,7 @@
         <span class="small muted">${t.series ? esc(t.series) + " · " : ""}${t.format} · On sale ${fmt(t.pubDate, true)} · ISBN ${t.isbn}</span></div>
         <a class="btn solid lg" href="#launch/${t.id}" data-tour="launch-ad">Launch ad</a></div>
       <div class="tiles" style="margin-top:14px" data-tour="title-tiles">${tiles}</div>
-      <div class="sec-head"><h2 class="sec">Suggestions</h2><span class="count${open.length ? " solid" : ""}">${open.length + nextTime.length}</span></div>
+      <div class="sec-head"><h2 class="sec">Suggestions</h2><span class="note">${open.length ? open.length + " waiting on you · " : ""}<a href="#campaign/${(live[0] || cs[0] || {}).id}">See all</a></span></div>
       <div class="cards" data-tour="landing-suggestions">${suggestions || `<div class="card quiet"><h3>No suggestions right now.</h3></div>`}</div>
       <div class="sec-head"><h2 class="sec">Title campaigns</h2><span class="note">${cs.length} total</span></div>
       <div class="ptable ctable" data-tour="title-campaigns"><div class="prow h"><span>Campaign</span><span>Status</span><span>Spend</span><span class="r">Results</span><span class="r">Cost per result</span></div>${campRows || '<div class="prow"><span class="muted">No campaigns yet.</span></div>'}</div>
@@ -520,6 +529,7 @@
     if (el.tagName === "BUTTON") e.preventDefault();
     fn(el);
   });
+  document.addEventListener("toggle", (e) => { const d = e.target; if (d.classList && d.classList.contains("sugg")) UI.openSugg[d.dataset.sid] = d.open; }, true);
   document.addEventListener("input", (e) => {
     if (e.target.id === "launch-q") { UI.launchQ = e.target.value; $("#launch-results").innerHTML = launchRows(UI.launchQ); }
     if (e.target.id === "title-q") { UI.titleQ = e.target.value; $("#title-results").innerHTML = titleRows(UI.titleQ); }
