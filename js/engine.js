@@ -127,8 +127,8 @@
     };
     // seed audit log with history so the log is not empty on first open
     s.audit.push(
-      { ts: "2026-10-01T09:02:00Z", actor: "human", who: "Imprint marketer, Northlight", action: "Approved plan", entity: "Glass Cartographer", before: "Draft", after: "Approved, $120,000" },
-      { ts: "2026-10-01T09:20:00Z", actor: "system", who: "Builder", action: "Created campaigns (paused) on 4 platforms", entity: "Glass Cartographer", before: "-", after: "4 campaigns, verified by read-back" },
+      { ts: "2026-10-01T09:02:00Z", actor: "human", who: "Imprint marketer, Bramble", action: "Approved plan", entity: "Daggerbound", before: "Draft", after: "Approved, $120,000" },
+      { ts: "2026-10-01T09:20:00Z", actor: "system", who: "Builder", action: "Created campaigns (paused) on 4 platforms", entity: "Daggerbound", before: "-", after: "4 campaigns, verified by read-back" },
       { ts: "2026-10-12T10:05:00Z", actor: "human", who: "Marketing director", action: "Approved plan above $25k threshold", entity: "Salt and Signal", before: "Draft", after: "Approved, $45,000" },
       { ts: "2026-10-28T15:41:00Z", actor: "agent", who: "Optimizer", action: "Proposed: add 14 negative keywords", entity: "The Quiet Ledger · Amazon", before: "-", after: "Approved by marketer, executed" }
     );
@@ -254,18 +254,18 @@
 
   // Optimizer seed run: draws on current data so numbers in evidence are real.
   function seedProposals(s) {
-    const glass = s.campaigns.find((c) => c.id === "cmp_glass");
+    const glass = s.campaigns.find((c) => c.id === "cmp_dagger");
     const salt = s.campaigns.find((c) => c.id === "cmp_salt");
     const hearts = s.campaigns.find((c) => c.id === "cmp_hearts");
     const ledger = s.campaigns.find((c) => c.id === "cmp_ledger");
 
-    // 1. Fatigue on Glass Cartographer cover-led Meta ad
+    // 1. Fatigue on Daggerbound cover-led Meta ad
     const cr = glass.creatives.find((x) => x.id === "cr_g1");
     const cs = creativeStats(glass, cr);
     newProposal(s, {
       campaign_id: glass.id, platform: "meta", action_type: "pause_creative", key: "fatigue_cr_g1",
-      params: { creative_id: "cr_g1", rotate_in: "Map-detail carousel (pre-approved)" },
-      summary: `Pause "${cr.name}" and rotate in the pre-approved map-detail carousel`,
+      params: { creative_id: "cr_g1", rotate_in: "Swordheart fans carousel (pre-approved)" },
+      summary: `Pause "${cr.name}" and rotate in the pre-approved Swordheart fans carousel`,
       evidence: [
         `CTR down ${round(cs.ctrDrop * 100)}% from its first 7 days to the last 7 days`,
         `Average frequency now ${round(glass.platforms.meta.daily.slice(-1)[0].freq, 1)} (playbook flag: rising frequency with falling CTR)`,
@@ -275,7 +275,7 @@
       rollback: "Re-activate the cover-led static; pause the carousel", dollar_impact: 0, agent: "Optimizer"
     });
 
-    // 2. Budget shift between platforms on Glass, from worse to better cost per click-out
+    // 2. Budget shift between platforms on Daggerbound, from worse to better cost per click-out
     const plats = ["meta", "google", "tiktok"].map((p) => ({ p, ...windowStats(glass, p) }));
     plats.sort((a, b) => a.cpa - b.cpa);
     const best = plats[0], worst = plats[plats.length - 1];
@@ -580,7 +580,7 @@
     s.alerts.push(
       { id: "al_1", day: s.today, severity: "warning", campaign_id: salt.id, platform: "tiktok", type: "pacing", text: `Salt and Signal: TikTok is ${round((tk.ratio - 1) * 100)}% ahead of the launch-week curve. Proposal drafted.`, open: true },
       { id: "al_2", day: s.today, severity: "warning", campaign_id: hearts.id, platform: "google", type: "pacing", text: `Small Wild Hearts: Google is ${round((1 - gg.ratio) * 100)}% behind plan (limited by bid). Proposal drafted.`, open: true },
-      { id: "al_3", day: addDays(s.today, -1), severity: "info", campaign_id: "cmp_glass", platform: "meta", type: "fatigue", text: "The Glass Cartographer: cover-led Meta ad shows creative fatigue. Proposal drafted.", open: true },
+      { id: "al_3", day: addDays(s.today, -1), severity: "info", campaign_id: "cmp_dagger", platform: "meta", type: "fatigue", text: "Daggerbound: cover-led Meta ad shows creative fatigue. Proposal drafted.", open: true },
       { id: "al_4", day: addDays(s.today, -2), severity: "info", campaign_id: "cmp_ledger", platform: "all", type: "platform_watch", text: "Platform watcher: Amazon legacy report pages retire Dec 31, 2026. ARGUS already reads unified reporting; no action needed.", open: true }
     );
     activity(s, "Budget steward", "Pulled hourly spend from Meta, Google Ads, TikTok and Amazon Ads. 4 live campaigns, 15 platform campaigns.");
@@ -767,7 +767,7 @@
   // ---------- TITLE SALES (stand-in for a BookScan / retailer feed) ----------
   // Weekly units for the last N weeks. Before publication the number is pre-orders,
   // which BookScan reports in pub week. Deterministic so every run is repeatable.
-  const GENRE_BASE = { "Fantasy": 150, "Thriller": 130, "YA Romance": 110, "Nonfiction (Policy)": 45, "Science Fiction": 95, "Literary / Book Club": 100 };
+  const GENRE_BASE = { "Fantasy / Romance": 640, "Fantasy": 150, "Thriller": 130, "YA Romance": 110, "Nonfiction (Policy)": 45, "Science Fiction": 95, "Literary / Book Club": 100 };
   function titleSales(s, titleId, weeks = 16) {
     const t = titleById(titleId);
     const camps = s.campaigns.filter((c) => c.titleId === titleId);
@@ -781,7 +781,7 @@
       const sincePub = daysBetween(t.pubDate, end);
       const n = noise(titleId + end + "units", 0.9, 1.1);
       let units = 0, pre = 0;
-      if (sincePub < 0) { pre = Math.round((6 + spend * 0.02) * n); preorders += pre; }
+      if (sincePub < 0) { pre = Math.round((6 + base * 0.12 + spend * 0.02) * n); preorders += pre; }
       else if (sincePub < 7) { units = Math.round((base * 5.5 + spend * 0.03) * n) + preorders; preorders = 0; }
       else { const wk = Math.floor(sincePub / 7); units = Math.round((base * (1 + 3 * Math.pow(0.55, wk)) + spend * 0.03) * n); }
       out.push({ start, end, spend, units, preorders: pre, pubWeek: sincePub >= 0 && sincePub < 7 });

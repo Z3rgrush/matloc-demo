@@ -17,6 +17,7 @@
   const PLATFORM_ORDER = ["meta", "google", "tiktok", "amazon"];
 
   const IMPRINTS = [
+    { id: "bramble",    name: "Bramble", owner: "Imprint marketer, Bramble", annualBudget: 480000 },
     { id: "northlight", name: "Northlight Books", owner: "Imprint marketer, Northlight", annualBudget: 420000 },
     { id: "emberoak",   name: "Ember & Oak",      owner: "Imprint marketer, Ember & Oak", annualBudget: 310000 },
     { id: "lantern",    name: "Lantern House Young Readers", owner: "Imprint marketer, Lantern House", annualBudget: 260000 },
@@ -26,11 +27,12 @@
   // Title metadata, shaped like a trimmed ONIX record.
   const TITLES = [
     {
-      id: "9781250990011", isbn: "978-1-250-99001-1", title: "The Glass Cartographer", author: "Imogen Vale",
-      imprint: "northlight", pubDate: "2026-10-20", format: "Hardcover", price: 29.99,
-      bisac: "FIC009020 Fiction / Fantasy / Epic", genre: "Fantasy", ageBand: "Adult",
-      comps: ["The Ninth Lantern", "A Map of Salt"], flags: [], asin: "B0DEMO0011",
-      cover: { bg: "#1f3b57", fg: "#e9d8a6", motif: "compass" }
+      // Real title metadata (us.macmillan.com). Every ad and sales number for it is illustrative.
+      id: "9781250400086", isbn: "978-1-250-40008-6", title: "Daggerbound", author: "T. Kingfisher", series: "Swordheart #2",
+      imprint: "bramble", pubDate: "2026-08-25", format: "Hardcover", price: 29.99, pages: 448,
+      bisac: "Fiction / Fantasy / Romantic", genre: "Fantasy / Romance", ageBand: "Adult",
+      comps: ["Swordheart", "Paladin's Grace"], flags: [], asin: "B0DEMO0011", real: true,
+      cover: { bg: "#3a1d35", fg: "#f4b6c8", motif: "sword" }
     },
     {
       id: "9781250990028", isbn: "978-1-250-99002-8", title: "Salt and Signal", author: "Daniel Okafor",
@@ -83,7 +85,7 @@
   // used to synthesize a believable spend history with deterministic noise.
   const CAMPAIGNS = [
     {
-      id: "cmp_glass", titleId: "9781250990011", name: "Glass Cartographer: launch + sustain",
+      id: "cmp_dagger", titleId: "9781250400086", name: "Daggerbound: fall sustain",
       objective: "launch", budget: 120000, start: "2026-10-01", end: "2026-11-30",
       destination: "Imprint where-to-buy page", status: "live",
       alloc: { meta: 0.38, google: 0.22, tiktok: 0.15, amazon: 0.25 },
@@ -115,6 +117,14 @@
       perf: { meta: {}, google: {}, tiktok: {}, amazon: { actionMult: 1.3 } }
     },
     {
+      id: "cmp_dagger_pre", titleId: "9781250400086", name: "Daggerbound: pre-order + launch",
+      objective: "preorder", budget: 50000, start: "2026-07-06", end: "2026-09-14",
+      destination: "Imprint where-to-buy page", status: "completed",
+      alloc: { meta: 0.35, google: 0.2, tiktok: 0.25, amazon: 0.2 },
+      deliver: { meta: 1.0, google: 0.98, tiktok: 1.02, amazon: 1.0 },
+      perf: { meta: {}, google: {}, tiktok: { actionMult: 1.3 }, amazon: {} }
+    },
+    {
       id: "cmp_ninefold", titleId: "9781250990059", name: "Ninefold Harbor: pre-order + launch",
       objective: "launch", budget: 40000, start: "2026-08-10", end: "2026-09-30",
       destination: "Imprint where-to-buy page", status: "completed",
@@ -126,11 +136,11 @@
 
   // Creatives per campaign (only some shown in detail).
   const CREATIVES = {
-    cmp_glass: [
+    cmp_dagger: [
       { id: "cr_g1", platform: "meta", name: "Cover-led static", hook: "cover", rights: "cleared", launchedDay: 0, fatigue: 0.022 },
       { id: "cr_g2", platform: "meta", name: "Quote-led carousel", hook: "quote", rights: "cleared", launchedDay: 0, fatigue: 0.006 },
       { id: "cr_g3", platform: "meta", name: "Author video (15s)", hook: "author", rights: "cleared", launchedDay: 10, fatigue: 0.003 },
-      { id: "cr_g4", platform: "tiktok", name: "Map-reveal trailer", hook: "trailer", rights: "cleared", launchedDay: 0, fatigue: 0.004 },
+      { id: "cr_g4", platform: "tiktok", name: "Sword-reveal trailer", hook: "trailer", rights: "cleared", launchedDay: 0, fatigue: 0.004 },
       { id: "cr_g5", platform: "google", name: "Search: title + author", hook: "search", rights: "cleared", launchedDay: 0, fatigue: 0 },
       { id: "cr_g6", platform: "amazon", name: "Sponsored Products (exact)", hook: "search", rights: "cleared", launchedDay: 0, fatigue: 0 }
     ],
@@ -148,6 +158,13 @@
     cmp_ledger: [
       { id: "cr_l1", platform: "amazon", name: "Sponsored Products (auto)", hook: "search", rights: "cleared", launchedDay: 0, fatigue: 0 },
       { id: "cr_l2", platform: "meta", name: "Author op-ed quote", hook: "quote", rights: "cleared", launchedDay: 0, fatigue: 0.005 }
+    ],
+    cmp_dagger_pre: [
+      { id: "cr_d1", platform: "meta", name: "Cover reveal static", hook: "cover", rights: "cleared", launchedDay: 0, fatigue: 0.01 },
+      { id: "cr_d2", platform: "meta", name: "Swordheart fans carousel", hook: "quote", rights: "cleared", launchedDay: 6, fatigue: 0.004 },
+      { id: "cr_d3", platform: "tiktok", name: "Banter quote reel", hook: "trailer", rights: "cleared", launchedDay: 0, fatigue: 0.005 },
+      { id: "cr_d4", platform: "google", name: "Search: title + author", hook: "search", rights: "cleared", launchedDay: 0, fatigue: 0 },
+      { id: "cr_d5", platform: "amazon", name: "Sponsored Products (exact)", hook: "search", rights: "cleared", launchedDay: 0, fatigue: 0 }
     ],
     cmp_ninefold: [
       { id: "cr_n1", platform: "meta", name: "Cover-led static", hook: "cover", rights: "cleared", launchedDay: 0, fatigue: 0.012 },

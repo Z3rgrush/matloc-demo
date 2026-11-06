@@ -11,19 +11,22 @@ A 5 to 7 minute presenter script. It follows the in-app guided tour step for ste
 
 ---
 
-## The home screen (30 seconds)
+## The title landing page (1 to 2 minutes)
 
 | # | Screen | Do | Say |
 |---|---|---|---|
-| 1 | Home | Start the tour | "ARGUS is an always-on ad specialist for Macmillan imprints, across Meta, Google, TikTok and Amazon Ads." |
-| 2 | Three rows | Point at each | "Three paths. Reporting to see what needs changing, Launch to start from an ISBN, and Title reporting for the full picture on one book." |
+| 1 | Landing | Start the tour | "ARGUS is an always-on ad specialist for Macmillan imprints, across Meta, Google, TikTok and Amazon Ads. This is Daggerbound; the title is real, the numbers are illustrative." |
+| 2 | Header and tiles | Point at Launch ad, then the four tiles | "Everything for one title: spend, pacing, results and a health score. Launch ad starts a new campaign for it." |
+| 3 | Suggestions | Scroll | "Every suggestion from its campaigns in one list: changes to approve now, then lessons from the ended pre-order campaign." |
+| 4 | Campaigns, platforms, sales | Scroll to the chart | "Every campaign, how each platform did, and weekly sales next to spend. Context, not proof of lift." |
+| 5 | Menu | Click Menu | "Three paths for everything else: Reporting, Launch, and Title reporting for any other title." |
 
 ## Reporting center (2 to 3 minutes)
 
 | # | Screen | Do | Say |
 |---|---|---|---|
 | 3 | Campaign list | Point at the numbers on the right | "Every active and ended campaign, worst health first. The number is how many suggestions Argus has." |
-| 4 | The Glass Cartographer | Read the first suggestion, then **Approve** | "Each suggestion has its evidence, expected impact, confidence, and how to undo it. This ad is wearing out." |
+| 4 | Daggerbound (fall sustain) | Read the first suggestion, then **Approve** | "Each suggestion has its evidence, expected impact, confidence, and how to undo it. This ad is wearing out." |
 | 5 | Same card, now done | Point at the check | "Argus made the change through the API, read it back, logged it, and will measure the result in three days. In Phase 1 every change waits for a person." |
 | 6 | Held by guardrails | Point at the dashed card | "This idea never reached anyone. Too big a step, too little evidence. The AI suggests; code decides what's allowed." |
 | 7 | Reporting center | **Simulate next day** | "Overnight, TikTok on Salt and Signal spends three times its plan." |

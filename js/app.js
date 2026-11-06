@@ -4,7 +4,7 @@
   "use strict";
   const D = window.ARGUS_DATA, E = window.ARGUS, C = window.ARGUS_CHARTS;
   const { esc, money } = C;
-  const KEY = "argus-state-v3";
+  const KEY = "argus-state-v4";
 
   // ---------------- state ----------------
   const store = {
@@ -29,6 +29,7 @@
   const campaignById = (id) => S.campaigns.find((c) => c.id === id);
   const campaignsFor = (tid) => S.campaigns.filter((c) => c.titleId === tid);
   const pname = (p) => D.PLATFORMS[p].name;
+  const cname = (c) => { const n = c.name.split(": ")[1] || c.name; return n[0].toUpperCase() + n.slice(1); };
   const usedPlatforms = (c) => D.PLATFORM_ORDER.filter((p) => c.platformBudget[p]);
   const isOpen = (p) => (p.status === "pending" || p.status === "partially_approved") && !(p.snoozed_until && p.snoozed_until > S.today);
   const openProps = (c) => S.proposals.filter((p) => p.campaign_id === c.id && isOpen(p)).sort((x, y) => (/^resume_/.test(y.key || "") ? 1 : 0) - (/^resume_/.test(x.key || "") ? 1 : 0));
@@ -55,7 +56,7 @@
   function top(active) {
     const l = (r, label) => `<a href="#${r}"${active === r ? ' aria-current="page"' : ""}>${label}</a>`;
     return `<header class="top"><a class="mark-sm" href="#" aria-label="ARGUS home">argus</a>
-      <nav class="seg" aria-label="Sections">${l("reporting", "Reporting")}${l("launch", "Launch")}${l("titles", "Titles")}</nav>
+      <nav class="seg" aria-label="Sections">${l("", "Overview")}${l("reporting", "Reporting")}${l("launch", "Launch")}${l("titles", "Titles")}</nav><a class="btn sm" href="#menu">Menu</a>
       <span class="spacer"></span><span class="pill num" title="The demo's simulated today">${fmt(S.today, true)}</span></header>`;
   }
   const back = (href, label) => `<a class="btn sm" href="${href}">← ${label}</a>`;
@@ -72,7 +73,7 @@
     const ready = D.TITLES.filter((t) => !campaignsFor(t.id).length).length;
     const row = (href, label, sub, count, tour, solid) => `<a class="row" href="${href}" data-tour="${tour}"><span class="row-main"><span class="row-label">${label} <span class="arrow">→</span></span><span class="home-sub">${sub}</span></span><span class="count${solid ? " solid" : ""}">${count}</span></a>`;
     return `<section class="home">${wordmark()}
-      <div class="toolbar"><span class="seg"><button aria-pressed="true" data-act="noop">Ad specialist</button><button data-act="noop" aria-pressed="false">Macmillan imprints</button></span>
+      <div class="toolbar"><a class="pill" href="#">← Daggerbound overview</a>
         <button class="pill" data-tour-open>Guided tour</button></div>
       <div class="rows" data-tour="home-rows">
         ${row("#reporting", "Reporting center", `${live} active, ${ended} ended${sugg ? ` · <b>${sugg} suggestion${sugg === 1 ? "" : "s"} waiting for you</b>` : ""}`, S.campaigns.length, "home-reporting", false)}
@@ -104,11 +105,11 @@
   }
 
   // ---------------- CAMPAIGN ----------------
-  function propCard(p, i) {
+  function propCard(p, i, withCampaign) {
     const nr = nextRole(p);
     const partial = p.status === "partially_approved";
     return `<article class="card" data-prop="${p.proposal_id}" data-key="${p.key || ""}">
-      <div class="meta"><span class="tag${p.risk === "high" ? " signal" : ""}">${p.risk} risk</span><span>${String(i + 1).padStart(2, "0")} · ${esc(p.agent || "Optimizer")}</span><span>· expires ${fmt(p.expires_at)}</span></div>
+      <div class="meta"><span class="tag${p.risk === "high" ? " signal" : ""}">${p.risk} risk</span><span>${String(i + 1).padStart(2, "0")} · ${esc(p.agent || "Optimizer")}${withCampaign === true ? " · " + esc(cname(campaignById(p.campaign_id))) : ""}</span><span>· expires ${fmt(p.expires_at)}</span></div>
       <h3>${esc(p.summary)}</h3>
       <ul class="why">${p.evidence.map((e) => `<li>${esc(e)}</li>`).join("")}</ul>
       <div class="impact"><div><b>Expected</b>${esc(p.expected_impact.estimate)} ${esc(p.expected_impact.metric)}</div><div><b>Confidence</b>${esc(p.expected_impact.confidence)}</div><div><b>If it doesn't work</b>${esc(p.rollback)}</div></div>
@@ -351,7 +352,7 @@
     const line = (key, dash) => { const pts = weeks.map((w, i) => (w[key] || (key === "units" && weeks.slice(0, i + 1).some((z) => z.units)) ? `${x(i)},${yU(w[key])}` : null)).filter(Boolean); return pts.length > 1 ? `<polyline points="${pts.join(" ")}" fill="none" stroke="var(--ink)" stroke-width="3"${dash ? ' stroke-dasharray="6 6"' : ""} stroke-linejoin="round"/>` : ""; };
     const dots = weeks.map((w, i) => (w.units ? `<circle cx="${x(i)}" cy="${yU(w.units)}" r="4.5" fill="var(--ink)"><title>Week ending ${fmt(w.end)}: ${int(w.units)} units</title></circle>` : "")).join("");
     const pubI = weeks.findIndex((w) => w.pubWeek);
-    const pub = pubI >= 0 ? `<line x1="${x(pubI)}" x2="${x(pubI)}" y1="${m.t}" y2="${m.t + ih}" stroke="var(--signal)" stroke-width="1.5" stroke-dasharray="3 4"/><text class="axis" x="${x(pubI) + 6}" y="${m.t + ih - 8}" text-anchor="end" style="fill:var(--signal)" transform="translate(-12 0)">PUB WEEK</text>` : "";
+    const pub = pubI >= 0 ? `<line x1="${x(pubI)}" x2="${x(pubI)}" y1="${m.t}" y2="${m.t + ih}" stroke="var(--signal)" stroke-width="1.5" stroke-dasharray="3 4"/><text class="axis" x="${x(pubI) + 6}" y="${m.t + 12}" text-anchor="end" style="fill:var(--signal)" transform="translate(-12 0)">ON SALE</text>` : "";
     const ticks = [0, 0.5, 1].map((f) => `<text class="axis" x="${m.l - 8}" y="${yS(maxS * f / 1.1) + 4}" text-anchor="end">${C.kfmt(maxS * f / 1.1)}</text><text class="axis" x="${W - m.r + 8}" y="${yU(maxU * f / 1.1) + 4}">${int(maxU * f / 1.1)}</text>`).join("");
     const xl = weeks.map((w, i) => (i % 3 === 0 ? `<text class="axis" x="${x(i)}" y="${H - 10}" text-anchor="middle">${fmt(w.end)}</text>` : "")).join("");
     return `<div class="chart" data-tour="sales-chart"><div class="legend"><span><i style="background:var(--ink-3);opacity:.38"></i>Weekly ad spend (left)</span><span><i style="background:var(--ink);height:3px"></i>Units sold (right)</span><span><i style="border-top:3px dashed var(--ink);height:0"></i>Pre-orders</span></div>
@@ -370,7 +371,7 @@
     ].map(([k, v, x]) => `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${x}</span></div>`).join("");
     const efforts = s.cs.map((c) => {
       const agg = E.campaignPacing(S, c), r = results(c);
-      return `<a class="row" href="#campaign/${c.id}"><span class="row-main"><span class="row-label md">${esc(c.name.split(": ")[1] || c.name)}</span><span class="row-sub row-flex"><span class="tag${c.status === "live" ? " solid" : ""}">${statusWord(c)}</span><span>${fmt(c.start)} to ${fmt(c.end, true)} · ${usedPlatforms(c).map(pname).join(", ")} · ${money(agg.spent)} of ${money(c.budget)} · ${int(r.clickouts)} click-outs, ${int(r.orders)} Amazon orders</span></span></span><span class="row-end"><span class="arrow" style="opacity:1;transform:none;font-size:28px">→</span></span></a>`;
+      return `<a class="row" href="#campaign/${c.id}"><span class="row-main"><span class="row-label md">${esc(cname(c))}</span><span class="row-sub row-flex"><span class="tag${c.status === "live" ? " solid" : ""}">${statusWord(c)}</span><span>${fmt(c.start)} to ${fmt(c.end, true)} · ${usedPlatforms(c).map(pname).join(", ")} · ${money(agg.spent)} of ${money(c.budget)} · ${int(r.clickouts)} click-outs, ${int(r.orders)} Amazon orders</span></span></span><span class="row-end"><span class="arrow" style="opacity:1;transform:none;font-size:28px">→</span></span></a>`;
     }).join("") || `<div class="card quiet"><h3>No campaigns yet.</h3><div><a class="btn solid" href="#launch/${t.id}">Launch one</a></div></div>`;
     const creatives = s.cs.flatMap((c) => c.creatives.map((cr) => `<div class="tl"><span class="when">${pname(cr.platform)}</span><span>${esc(cr.name)}</span><span class="tag">${cr.status === "active" ? "Running" : cr.status || "Ran"}</span></div>`)).join("") || `<div class="tl"><span class="when">-</span><span class="muted">No creative has run yet.</span><span></span></div>`;
     const changes = S.audit.filter((a) => a.entity && a.entity.startsWith(t.title)).slice(0, 8).map((a) => `<div class="tl"><span class="when">${fmt(a.ts.slice(0, 10))}</span><span>${esc(a.action)}${a.after && a.after !== "-" ? `<br><span class="small muted">${esc(a.after)}</span>` : ""}</span><span class="small muted">${esc(a.who)}</span></div>`).join("")
@@ -384,17 +385,81 @@
         <div><div class="sec-head" style="margin-top:26px"><h2 class="sec">Changes Argus made</h2></div><div class="timeline">${changes}</div></div></div>`;
   }
 
+  // ---------------- TITLE LANDING ----------------
+  const FEATURED = "9781250400086";
+  function renderLanding(id) {
+    const t = titleById(id);
+    const cs = campaignsFor(id), live = cs.filter((c) => c.status === "live"), ended = cs.filter((c) => c.status === "completed");
+    const all = cs.map((c) => ({ c, agg: E.campaignPacing(S, c), res: results(c) }));
+    const spent = all.reduce((a, x) => a + x.agg.spent, 0), budget = cs.reduce((a, c) => a + c.budget, 0);
+    const liveAgg = all.filter((x) => x.c.status === "live");
+    const lSpent = liveAgg.reduce((a, x) => a + x.agg.spent, 0), lPlanned = liveAgg.reduce((a, x) => a + x.agg.planned, 0);
+    const dev = lPlanned ? Math.round((lSpent / lPlanned - 1) * 100) : 0;
+    const co = all.reduce((a, x) => a + x.res.clickouts, 0), orders = all.reduce((a, x) => a + x.res.orders, 0);
+    const health = live.map((c) => E.titleHealth(S, c)).sort((a, b) => a.score - b.score)[0];
+    const tiles = [
+      ["Spent", money(spent), `of ${money(budget)} across ${cs.length} campaign${cs.length === 1 ? "" : "s"}`, `<div class="meter"><span style="width:${budget ? Math.min(100, (spent / budget) * 100) : 0}%"></span></div>`],
+      ["Pacing", !live.length ? "No live campaign" : Math.abs(dev) < 5 ? "On plan" : `${Math.abs(dev)}% ${dev > 0 ? "ahead" : "behind"}`, live.length ? `live campaign vs its spend curve · ${money(lSpent)} of ${money(lPlanned)} planned to date` : ""],
+      ["Results", int(co + orders), `${int(co)} retailer click-outs · ${int(orders)} Amazon orders`],
+      ["Health", health ? String(health.score) : "-", health ? `${health.label}${health.reasons[0] ? " · " + health.reasons[0].text : ""}` : "No live campaign to score"]
+    ].map(([k, v, x, extra]) => `<div class="tile"><span class="k">${k}</span><span class="v">${esc(v)}</span>${extra || ""}<span class="s">${esc(x)}</span></div>`).join("");
+
+    const open = S.proposals.filter((p) => cs.some((c) => c.id === p.campaign_id) && isOpen(p))
+      .sort((x, y) => (/^resume_/.test(y.key || "") ? 1 : 0) - (/^resume_/.test(x.key || "") ? 1 : 0));
+    const done = S.proposals.filter((p) => cs.some((c) => c.id === p.campaign_id) && p.status === "executed");
+    const held = S.blocked.filter((p) => cs.some((c) => c.id === p.campaign_id));
+    const nextTime = ended.flatMap((c) => E.report(S, c).next.map((n, i) => ({ c, n, k: c.id + i })));
+    const suggestions = open.map((p, i) => propCard(p, i, true)).join("")
+      + nextTime.map((x, i) => { const on = UI.playbook[x.k]; return `<article class="card"><div class="meta"><span class="tag">Next time</span><span>${String(open.length + i + 1).padStart(2, "0")} · Reporter · from the ended ${esc(cname(x.c).toLowerCase())} campaign</span></div><h3>${esc(x.n)}</h3><div class="btns"><button class="btn${on ? "" : " solid"}" data-act="playbook" data-k="${x.k}">${on ? "✓ Added to the imprint playbook" : "Add to playbook"}</button></div></article>`; }).join("")
+      + done.map(doneCard).join("") + held.map(heldCard).join("");
+
+    const order = { live: 0, scheduled: 1, completed: 2 };
+    const campRows = all.slice().sort((a, b) => order[a.c.status] - order[b.c.status] || (a.c.start < b.c.start ? 1 : -1)).map(({ c, agg, res }) => {
+      const n = res.clickouts + res.orders;
+      return `<a class="prow" href="#campaign/${c.id}"><span><b style="font-weight:600">${esc(cname(c))}</b><br><span class="small muted">${usedPlatforms(c).map(pname).join(", ")}</span></span>
+        <span><span class="tag${c.status === "live" ? " solid" : ""}">${statusWord(c)}</span></span>
+        <span class="meter-cell"><div class="meter"><span style="width:${Math.min(100, agg.consumed * 100)}%"></span>${c.status === "live" ? `<i style="left:${Math.min(100, (agg.planned / c.budget) * 100)}%"></i>` : ""}</div><div class="small muted" style="margin-top:6px">${money(agg.spent)} of ${money(c.budget)} · ${fmt(c.start)} to ${fmt(c.end)}</div></span>
+        <span class="r">${int(n)} results</span><span class="r">${n ? "$" + (agg.spent / n).toFixed(2) + " each" : "-"}</span></a>`;
+    }).join("");
+
+    const plat = D.PLATFORM_ORDER.map((p) => {
+      const rows = cs.filter((c) => c.platformBudget[p]).map((c) => E.totals(c, p));
+      const sp = rows.reduce((a, r) => a + r.spend, 0), act = rows.reduce((a, r) => a + r.actions, 0);
+      const lr = live.filter((c) => c.platformBudget[p]).map((c) => E.platformPacing(S, c, p)).filter(Boolean)[0];
+      const ldev = lr ? Math.round((lr.ratio - 1) * 100) : null;
+      const pace = !lr ? "Not live" : lr.status === "paused_safety" ? '<span class="tag signal">Paused at cap</span>' : Math.abs(ldev) < 10 ? "On plan" : `${Math.abs(ldev)}% ${ldev > 0 ? "ahead" : "behind"}`;
+      return { p, sp, act, pace };
+    }).filter((x) => x.sp > 0);
+    const totalSp = plat.reduce((a, x) => a + x.sp, 0);
+    const platRows = plat.map((x) => `<div class="prow"><span class="pname">${pname(x.p)}</span><span class="meter-cell"><div class="meter"><span style="width:${(x.sp / totalSp) * 100}%"></span></div><div class="small muted" style="margin-top:6px">${money(x.sp)} · ${Math.round((x.sp / totalSp) * 100)}% of spend</div></span><span>${x.pace}</span><span class="r">${int(x.act)} ${x.p === "amazon" ? "orders" : "click-outs"}</span><span class="r hide-md">${x.act ? "$" + (x.sp / x.act).toFixed(2) + " each" : "-"}</span></div>`).join("");
+
+    return `${top("")}
+      <div class="title-head" data-tour="title-head">${C.cover(t, 54)}<div class="info"><h1>${esc(t.title)}<span class="sep">–</span><span class="by">${esc(t.author)}</span><span class="sep">–</span><span class="by">${esc(imprintName(t.imprint))}</span></h1>
+        <span class="small muted">${t.series ? esc(t.series) + " · " : ""}${t.format} · On sale ${fmt(t.pubDate, true)} · ISBN ${t.isbn}</span></div>
+        <a class="btn solid lg" href="#launch/${t.id}" data-tour="launch-ad">Launch ad</a></div>
+      <div class="tiles" style="margin-top:14px" data-tour="title-tiles">${tiles}</div>
+      <div class="sec-head"><h2 class="sec">Suggestions</h2><span class="count${open.length ? " solid" : ""}">${open.length + nextTime.length}</span></div>
+      <div class="cards" data-tour="landing-suggestions">${suggestions || `<div class="card quiet"><h3>No suggestions right now.</h3></div>`}</div>
+      <div class="sec-head"><h2 class="sec">Title campaigns</h2><span class="note">${cs.length} total</span></div>
+      <div class="ptable ctable" data-tour="title-campaigns"><div class="prow h"><span>Campaign</span><span>Status</span><span>Spend</span><span class="r">Results</span><span class="r">Cost per result</span></div>${campRows || '<div class="prow"><span class="muted">No campaigns yet.</span></div>'}</div>
+      <div class="sec-head"><h2 class="sec">Platform breakdown</h2><span class="note">All campaigns combined</span></div>
+      <div class="ptable" data-tour="platforms"><div class="prow h"><span>Platform</span><span>Spend</span><span>Live pacing</span><span class="r">Results</span><span class="r hide-md">Cost per result</span></div>${platRows}</div>
+      <div class="sec-head"><h2 class="sec">Sales</h2><span class="note">Last 16 weeks</span></div>
+      ${salesChart(t, E.titleSales(S, id))}
+      ${t.real ? `<p class="small muted" style="margin-top:14px">Title details are from us.macmillan.com. All ad and sales numbers on this page are illustrative.</p>` : ""}`;
+  }
+
   // ---------------- router ----------------
   let lastRoute = null;
   function parse() { const [r, a] = location.hash.replace(/^#/, "").split("/"); return { r: r || "home", a }; }
   function render() {
     const { r, a } = parse();
     const html = r === "reporting" ? renderReporting() : r === "campaign" ? renderCampaign(a) : r === "launch" ? (a ? renderLaunchTitle(a) : renderLaunchHome())
-      : r === "titles" ? renderTitles() : r === "title" ? renderTitle(a) : renderHome();
+      : r === "titles" ? renderTitles() : r === "title" ? renderTitle(a) : r === "menu" ? renderHome() : renderLanding(FEATURED);
     $("#view").innerHTML = html;
     const key = r + "/" + (a || "");
     if (key !== lastRoute) { window.scrollTo(0, 0); lastRoute = key; }
-    document.title = r === "home" ? "ARGUS Demo" : "ARGUS · " + ({ reporting: "Reporting", campaign: "Campaign", launch: "Launch", titles: "Titles", title: "Title" }[r] || "Demo");
+    document.title = r === "home" ? "ARGUS Demo" : "ARGUS · " + ({ menu: "Menu", reporting: "Reporting", campaign: "Campaign", launch: "Launch", titles: "Titles", title: "Title" }[r] || "Demo");
     window.dispatchEvent(new Event("argus:render"));
   }
   window.addEventListener("hashchange", render);

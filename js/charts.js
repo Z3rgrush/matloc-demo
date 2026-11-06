@@ -10,6 +10,7 @@
     const h = Math.round(w * 1.5);
     const c = t.cover;
     const motif = {
+      sword: `<path d="M50 34 L54 40 L54 82 L46 82 L46 40Z" fill="${c.fg}"/><rect x="36" y="82" width="28" height="5" rx="2" fill="${c.fg}"/><rect x="47" y="87" width="6" height="12" fill="${c.fg}"/><circle cx="50" cy="102" r="4" fill="${c.fg}"/>`,
       compass: `<circle cx="50" cy="62" r="18" fill="none" stroke="${c.fg}" stroke-width="2"/><path d="M50 40 L55 62 L50 84 L45 62Z" fill="${c.fg}"/>`,
       wave: `<path d="M10 70 Q30 55 50 70 T90 70" fill="none" stroke="${c.fg}" stroke-width="3"/><path d="M10 82 Q30 67 50 82 T90 82" fill="none" stroke="${c.fg}" stroke-width="2" opacity=".6"/>`,
       heart: `<path d="M50 88 C20 66 26 44 42 46 C47 47 50 52 50 52 C50 52 53 47 58 46 C74 44 80 66 50 88Z" fill="${c.fg}"/>`,

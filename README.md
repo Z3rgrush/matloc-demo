@@ -4,7 +4,7 @@
 
 This repository is a clickable demo of the Phase 1 toolkit described in the scoping plan (Draft v0.1, November 5, 2026), plus a guided walkthrough. Phase 1 executes only human-approved changes; opt-in autonomy for low-risk actions is planned for later.
 
-> All imprints, titles, ISBNs, people and numbers in this demo are fictional.
+> Daggerbound's title details are real. Every other title, imprint and person, and every ad and sales number, is fictional.
 
 ## Run it
 
@@ -20,7 +20,9 @@ Run the engine tests with `npm test` (Node 20+).
 
 ## What the demo covers
 
-The home screen is a simple menu with three paths.
+The landing page is a single title's report, using a real Macmillan title (**Daggerbound** by T. Kingfisher, Bramble; details from us.macmillan.com, every ad and sales number illustrative). Top to bottom: title, author and imprint with a **Launch ad** button; Spent, Pacing, Results and Health tiles; every suggestion from the title's campaigns (live-campaign changes to approve, then next-time lessons from ended campaigns); the title's campaigns; a platform breakdown across them; and weekly sales next to ad spend.
+
+The **Menu** (`#menu`) has three paths.
 
 | Path | What it does |
 |---|---|
@@ -32,7 +34,7 @@ The home screen is a simple menu with three paths.
 
 ## Guided walkthrough
 
-- **In-app tour** (`js/tour.js`): 18 steps that drive the live demo, with a "Do it for me" button on every action.
+- **In-app tour** (`js/tour.js`): 21 steps that drive the live demo, with a "Do it for me" button on every action.
 - **Presenter script** ([docs/WALKTHROUGH.md](docs/WALKTHROUGH.md)): a 5 to 7 minute talk track and likely questions.
 
 ## How it's built
