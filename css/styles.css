@@ -304,3 +304,30 @@ a.row:hover .arrow { opacity: 1; transform: none; }
   .sugg-body { padding: 4px 16px 16px; }
   .sugg-body .impact { grid-template-columns: 1fr; }
 }
+
+/* ---------- print: the title page on one letter sheet ---------- */
+@page { size: letter; margin: 0; }
+@media print {
+  :root { color-scheme: light; }
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: var(--bg); }
+  body { padding: 0.4in; min-height: 100vh; }
+  .see-all, .title-real { display: none !important; }
+  .page { padding: 0; min-height: 0; }
+  .top { margin-bottom: 12px; }
+  .top .seg, .top .btn, .foot-r, .toast, .tour-spot, .tour-card, .chev, .sum-meta { display: none !important; }
+  .mark-sm { font-size: 34px; }
+  .title-head { padding: 14px 20px; }
+  .title-head .btn { padding: 8px 18px; font-size: 14px; }
+  .tiles { margin: 10px 0 0 !important; gap: 10px; }
+  .tile { padding: 14px 18px; gap: 5px; }
+  .sec-head { margin: 18px 0 8px; }
+  .sugg summary { padding: 9px 16px; }
+  .cards { gap: 6px; }
+  .ptable { padding: 2px 22px; }
+  .prow { padding: 8px 0; font-size: 14px; }
+  .prow .meter-cell .small { margin-top: 3px !important; }
+  .chart { padding: 14px 20px 10px; }
+  .chart svg { max-height: 230px; }
+  .foot { padding: 10px 0 0; }
+  .sugg, .tile, .ptable, .chart, .title-head { break-inside: avoid; }
+}

@@ -447,7 +447,7 @@
         <span class="small muted">${t.series ? esc(t.series) + " · " : ""}${t.format} · On sale ${fmt(t.pubDate, true)} · ISBN ${t.isbn}</span></div>
         <a class="btn solid lg" href="#launch/${t.id}" data-tour="launch-ad">Launch ad</a></div>
       <div class="tiles" style="margin-top:14px" data-tour="title-tiles">${tiles}</div>
-      <div class="sec-head"><h2 class="sec">Suggestions</h2><span class="note">${open.length ? open.length + " waiting on you · " : ""}<a href="#campaign/${(live[0] || cs[0] || {}).id}">See all</a></span></div>
+      <div class="sec-head"><h2 class="sec">Suggestions</h2><span class="note">${open.length ? open.length + " waiting on you" : ""}<span class="see-all">${open.length ? " · " : ""}<a href="#campaign/${(live[0] || cs[0] || {}).id}">See all</a></span></span></div>
       <div class="cards" data-tour="landing-suggestions">${suggestions || `<div class="card quiet"><h3>No suggestions right now.</h3></div>`}</div>
       <div class="sec-head"><h2 class="sec">Title campaigns</h2><span class="note">${cs.length} total</span></div>
       <div class="ptable ctable" data-tour="title-campaigns"><div class="prow h"><span>Campaign</span><span>Status</span><span>Spend</span><span class="r">Results</span><span class="r">Cost per result</span></div>${campRows || '<div class="prow"><span class="muted">No campaigns yet.</span></div>'}</div>
@@ -455,7 +455,7 @@
       <div class="ptable" data-tour="platforms"><div class="prow h"><span>Platform</span><span>Spend</span><span>Live pacing</span><span class="r">Results</span><span class="r hide-md">Cost per result</span></div>${platRows}</div>
       <div class="sec-head"><h2 class="sec">Sales</h2><span class="note">Last 16 weeks</span></div>
       ${salesChart(t, E.titleSales(S, id))}
-      ${t.real ? `<p class="small muted" style="margin-top:14px">Title details are from us.macmillan.com. All ad and sales numbers on this page are illustrative.</p>` : ""}`;
+      ${t.real ? `<p class="small muted title-real" style="margin-top:14px">Title details are from us.macmillan.com. All ad and sales numbers on this page are illustrative.</p>` : ""}`;
   }
 
   // ---------------- router ----------------
