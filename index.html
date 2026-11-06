@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MATLOC Demo</title>
+<title>ARGUS Demo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Demo of the Macmillan Ad Toolkit: an approval-gated advertising agent for book imprints across Meta, Google, TikTok and Amazon Ads.">
+<meta name="description" content="Demo of ARGUS, an always-on advertising specialist for Macmillan imprints across Meta, Google, TikTok and Amazon Ads.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <div class="shell">
   <aside class="rail" id="rail" data-tour="rail" aria-label="Main menu">
     <div class="rail-top">
-      <a class="brand" href="#actions" aria-label="MATLOC home"><span class="brand-mark" aria-hidden="true">M</span><span class="brand-text"><b>MATLOC</b><span>Macmillan Ad Toolkit</span></span></a>
+      <a class="brand" href="#actions" aria-label="ARGUS home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 18c4-6.5 8.6-9.5 14-9.5S27 11.5 31 18c-4 6.5-8.6 9.5-14 9.5S7 24.5 3 18z"/><circle cx="17" cy="18" r="5.2" fill="var(--hl)" stroke="var(--rust)"/><circle cx="17" cy="18" r="1.9" fill="currentColor" stroke="none"/><path d="M17 3.5v3M9.5 5.5l1.5 2.6M24.5 5.5L23 8.1M4.5 10l2.3 1.8M29.5 10l-2.3 1.8"/></svg></span><span class="brand-text"><b>ARGUS</b><span>Ad specialist for Macmillan imprints</span></span></a>
       <button class="rail-toggle" id="rail-toggle" aria-label="Collapse menu" aria-expanded="true"></button>
     </div>
     <div class="rail-body" id="rail-body"></div>
@@ -23,6 +23,7 @@
   </aside>
   <div class="scrim" id="scrim" aria-hidden="true"></div>
   <div class="main">
+    <div class="notice" id="notice" role="status"></div>
     <header class="bar">
       <button class="btn sm ghost menu-btn" id="menu-btn" aria-label="Open menu"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
       <div class="clock" data-tour="clock"><span class="muted small">Today</span><span class="num" id="clock"></span></div>

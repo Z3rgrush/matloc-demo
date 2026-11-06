@@ -1,6 +1,8 @@
-# MATLOC demo
+# ARGUS demo
 
-**MATLOC** (Macmillan Ad Toolkit: Launching, Optimizing, Converting) is an approval-gated advertising specialist for Macmillan imprints. This repository is a clickable demo of the Phase 1 toolkit described in the scoping plan (Draft v0.1, November 5, 2026), plus a guided walkthrough.
+**ARGUS** (formerly MATLOC, named for the hundred-eyed watchman who never slept) will be an agentic advertising specialist that gives every Macmillan imprint an ad toolbox built around its own budget, workflow, and goals. Most ad operators at Macmillan are generalists, so ARGUS will launch campaigns using proven best practices, setting up each ad correctly instead of whatever way is quickest. Once campaigns are live, it will monitor and optimize them, either making changes itself or sending recommendations to a human operator for approval. It will be able to tie ad spend to sales movement when needed, and build in-house audiences that keep improving over time. Through integration with CHAPTR's Reedy keyword and subtitle generation and Amplify content creation, an imprint will be able to launch a full slate of optimized ads just by typing in an ISBN, a budget, and a quick description of its goals. This will save time and standardize ad processes to improve every KPI.
+
+This repository is a clickable demo of the Phase 1 toolkit described in the scoping plan (Draft v0.1, November 5, 2026), plus a guided walkthrough. Phase 1 executes only human-approved changes; opt-in autonomy for low-risk actions is planned for later.
 
 > All imprints, titles, ISBNs, people and numbers in this demo are fictional.
 
@@ -22,7 +24,7 @@ The left menu keeps **Action center** and **Approvals** pinned, then offers thre
 
 | Screen | What it shows | Scoping plan |
 |---|---|---|
-| **Action center** (home) | An ordered to-do list built from live state: safety stops first, then decisions with the agent's recommendation, reminders, launches due, reports to read. Title health for every live title | §3.1 G2, G5, §7.7 |
+| **Action center** (home) | An "Ask Argus" box (type an ISBN, budget and goal to draft a launch, or ask about a title or the budget) and an ordered to-do list built from live state: safety stops first, then decisions with the agent's recommendation, reminders, launches due, reports to read. Title health for every live title | §3.1 G2, G5, §7.7 |
 | **Portfolio** | Live budget, spend, forecast, approvals waiting, alerts, what the agents did overnight | §7.6 Portfolio, §3.1 G2 |
 | **Approvals** | Structured proposals (evidence, impact, risk, rollback, expiry), approve / edit / reject with reasons / snooze, multi-role approval chains, proposals held by guardrails | §7.3, §7.4 |
 | **Budget & pacing** | Imprint → title → platform budgets, pacing against the pub-date curve, forecast, guardrail tiers, emergency auto-pause, kill switch, reconciliation | §7.7 |
@@ -39,7 +41,7 @@ The **Advance one day** button runs a simulated day: connectors "pull" spend, th
 
 ## Guided walkthrough
 
-- **In-app tour** (`js/tour.js`): 32 steps that drive the live demo, with a "Do it for me" button on every action so a presenter can run the whole story with one hand. Each step cites the scoping-plan section it demonstrates.
+- **In-app tour** (`js/tour.js`): 33 steps that drive the live demo, with a "Do it for me" button on every action so a presenter can run the whole story with one hand. Each step cites the scoping-plan section it demonstrates.
 - **Presenter script** ([docs/WALKTHROUGH.md](docs/WALKTHROUGH.md)): a 10-minute talk track, what to click, what to say, and likely questions.
 
 ## How it's built

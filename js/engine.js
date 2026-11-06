@@ -1,4 +1,4 @@
-/* MATLOC agent + governance engine (demo).
+/* ARGUS agent + governance engine (demo).
  *
  * Layering mirrors §7.1 of the scoping plan:
  *   - "Agents" (Planner, Budget steward, Monitor, Optimizer, Reporter) REASON and emit
@@ -12,7 +12,7 @@
  */
 (function (root) {
   "use strict";
-  const D = root.MATLOC_DATA || (typeof require !== "undefined" ? require("./data.js") : null);
+  const D = root.ARGUS_DATA || (typeof require !== "undefined" ? require("./data.js") : null);
 
   // ---------- small utilities ----------
   const DAY = 86400000;
@@ -581,7 +581,7 @@
       { id: "al_1", day: s.today, severity: "warning", campaign_id: salt.id, platform: "tiktok", type: "pacing", text: `Salt and Signal: TikTok is ${round((tk.ratio - 1) * 100)}% ahead of the launch-week curve. Proposal drafted.`, open: true },
       { id: "al_2", day: s.today, severity: "warning", campaign_id: hearts.id, platform: "google", type: "pacing", text: `Small Wild Hearts: Google is ${round((1 - gg.ratio) * 100)}% behind plan (limited by bid). Proposal drafted.`, open: true },
       { id: "al_3", day: addDays(s.today, -1), severity: "info", campaign_id: "cmp_glass", platform: "meta", type: "fatigue", text: "The Glass Cartographer: cover-led Meta ad shows creative fatigue. Proposal drafted.", open: true },
-      { id: "al_4", day: addDays(s.today, -2), severity: "info", campaign_id: "cmp_ledger", platform: "all", type: "platform_watch", text: "Platform watcher: Amazon legacy report pages retire Dec 31, 2026. MATLOC already reads unified reporting; no action needed.", open: true }
+      { id: "al_4", day: addDays(s.today, -2), severity: "info", campaign_id: "cmp_ledger", platform: "all", type: "platform_watch", text: "Platform watcher: Amazon legacy report pages retire Dec 31, 2026. ARGUS already reads unified reporting; no action needed.", open: true }
     );
     activity(s, "Budget steward", "Pulled hourly spend from Meta, Google Ads, TikTok and Amazon Ads. 4 live campaigns, 15 platform campaigns.");
     activity(s, "Monitor", "Daily performance check: 2 pacing alerts, 1 creative-fatigue signal, 0 disapprovals, 0 tracking breaks.");
@@ -750,7 +750,7 @@
         "Paused one Sponsored Brands ad for 6 hours after a cover-image disapproval; resubmitted and approved the same day."
       ],
       caveats: [
-        "Meta, Google and TikTok results are platform-reported click-outs from the where-to-buy page, not retail sales. Most purchases happen at retailers MATLOC cannot see.",
+        "Meta, Google and TikTok results are platform-reported click-outs from the where-to-buy page, not retail sales. Most purchases happen at retailers ARGUS cannot see.",
         "Amazon attributed sales use Amazon's 14-day window and are not incremental. They are not added to other platforms' numbers.",
         "BookScan shows launch-week units 22% above the comp-title average, but this is context, not proof of ad impact; no holdout test ran on this campaign."
       ],
@@ -801,6 +801,6 @@
     validateProposal, decide, execute, runMonitor, advanceDay, newProposal,
     draftPlan, runCompliance, approversForPlan, launchCampaign, report, titleById, imprintById, round, sum
   };
-  root.MATLOC = api;
+  root.ARGUS = api;
   if (typeof module !== "undefined") module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

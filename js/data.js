@@ -1,4 +1,4 @@
-/* MATLOC demo data.
+/* ARGUS demo data.
  * Every imprint, title, ISBN, and number in this file is fictional and exists only
  * to drive the demo. Swap in real ONIX / platform exports later via the same shapes.
  */
@@ -177,9 +177,9 @@
     ]
   };
 
-  root.MATLOC_DATA = {
+  root.ARGUS_DATA = {
     DEMO_TODAY, PLATFORMS, PLATFORM_ORDER, IMPRINTS, TITLES, BENCHMARKS,
     CAMPAIGNS, CREATIVES, ASSETS, CLAIM_SOURCES
   };
-  if (typeof module !== "undefined") module.exports = root.MATLOC_DATA;
+  if (typeof module !== "undefined") module.exports = root.ARGUS_DATA;
 })(typeof window !== "undefined" ? window : globalThis);

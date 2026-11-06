@@ -114,5 +114,5 @@
     </svg>`;
   }
 
-  root.MATLOC_CHARTS = { cover, pacingChart, spark, curveBars, money, kfmt, esc };
+  root.ARGUS_CHARTS = { cover, pacingChart, spark, curveBars, money, kfmt, esc };
 })(window);

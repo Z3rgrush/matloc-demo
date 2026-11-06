@@ -1,7 +1,7 @@
-/* MATLOC demo UI: hash router, views, and delegated actions. */
+/* ARGUS demo UI: hash router, views, and delegated actions. */
 (function () {
   "use strict";
-  const E = window.MATLOC, D = window.MATLOC_DATA, C = window.MATLOC_CHARTS;
+  const E = window.ARGUS, D = window.ARGUS_DATA, C = window.ARGUS_CHARTS;
   const { money, esc, cover } = C;
   const pct = (x, d = 0) => (x * 100).toFixed(d) + "%";
   const signed = (x) => (x >= 0 ? "+" : "") + Math.round(x * 100) + "%";
@@ -20,7 +20,7 @@
   function freshWizard() {
     return {
       step: 0, titleId: null,
-      brief: { objective: "preorder", budget: 35000, start: "2027-01-12", end: "2027-03-23", destination: "Imprint where-to-buy page", exclusions: "Existing newsletter subscribers; recent purchasers (Amazon)" },
+      brief: { objective: "preorder", budget: 35000, start: "2027-01-12", end: "2027-03-23", destination: "Imprint where-to-buy page", exclusions: "Existing newsletter subscribers; recent purchasers (Amazon)", goal: "Build pre-orders with book clubs and literary fiction readers" },
       plan: null, splitEdit: null,
       copy: {
         meta: "The most anticipated novel of the spring. A family orchard, one impossible tide, and three sisters who must decide what to save. Pre-order today.",
@@ -140,6 +140,8 @@
     $("#kill").hidden = !S.killSwitch;
     const top = buildTasks().find((t) => t.cta);
     $("#next-chip").innerHTML = top ? `<span class="nlabel">Next step</span><span class="ntext">${esc(top.short || top.title)}</span><span class="ngo">${esc(top.cta.act === "approve" ? "Review" : top.cta.label)} →</span>` : `<span class="nlabel">All clear</span><span class="ntext">Nothing needs you right now</span>`;
+    const n = buildTasks().filter((t) => t.cta).length;
+    $("#notice").innerHTML = `<span>Argus watched ${liveCampaigns().length} live campaigns on 4 platforms overnight${n ? `, and ${n} thing${n > 1 ? "s" : ""} need you` : ". Nothing needs you"}.</span>${route() !== "actions" ? '<a href="#actions">Open the Action center →</a>' : ""}`;
     $("#next-chip").dataset.task = top ? top.id : "";
     $("#next-chip").disabled = !top;
   }
@@ -153,7 +155,7 @@
     const nb = nextBest(r);
     if (nb) { const head = $(".view-head", view()); if (head) head.insertAdjacentHTML("afterend", nb); }
     after[r] && after[r]();
-    document.title = "MATLOC · " + ROUTES[r].label;
+    document.title = "ARGUS · " + ROUTES[r].label;
     window.dispatchEvent(new CustomEvent("matloc:render", { detail: r }));
   }
   const after = {};
@@ -212,6 +214,55 @@
     if (S.blocked.length) tasks.push({ id: "blocked", pri: "fyi", title: `${S.blocked.length} agent idea${S.blocked.length > 1 ? "s were" : " was"} held by guardrails`, why: "The policy engine refused it before it reached anyone. No action needed.", alt: { label: "See why", href: "#approvals" } });
     return tasks;
   }
+  // ---- Ask Argus: a plain-language entry point (ISBN + budget + goal starts a launch) ----
+  const ARGUS_EYE = `<svg class="argus-eye" viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 38c14-20 32-29 54-29s40 9 54 29c-14 20-32 29-54 29S20 58 6 38z"/><circle class="iris" cx="60" cy="38" r="16" stroke-width="2.4"/><circle cx="60" cy="38" r="6" fill="currentColor" stroke="none"/><circle cx="65" cy="33" r="2.2" fill="var(--bg)" stroke="none"/><path d="M60 2v6M38 5l3 6M82 5l-3 6M18 13l5 5M102 13l-5 5"/></svg>`;
+  const ASK_EXAMPLES = [
+    "Launch 978-1-250-99006-6 with $35k for pre-orders, book clubs and literary fiction readers",
+    "How is Salt and Signal doing?",
+    "Which title needs the most help?",
+    "Are we on budget?"
+  ];
+  function askArgus(q) {
+    UI.askText = q;
+    const s = q.toLowerCase().trim();
+    if (!s) { UI.askAnswer = null; return; }
+    const digits = q.replace(/[^0-9]/g, "");
+    const title = D.TITLES.find((t) => digits.includes(t.id)) || D.TITLES.find((t) => s.includes(t.title.toLowerCase().replace(/^the /, "")));
+    const m = q.match(/\$\s?(\d[\d,]*(?:\.\d+)?)\s*(k|thousand)?/i) || q.match(/\b(\d[\d,]*)\s*(k)\b/i);
+    const budget = m ? Math.round(parseFloat(m[1].replace(/,/g, "")) * (m[2] ? 1000 : 1)) : null;
+    const wantsLaunch = /launch|campaign|pre-?order|promote|advertis|run ads|set up|plan/.test(s) || !!budget;
+    if (title && wantsLaunch && title.unlaunched) {
+      const objective = /pre-?order/.test(s) ? "preorder" : /backlist/.test(s) ? "backlist" : /tour|event/.test(s) ? "event" : /award|review/.test(s) ? "award" : /launch week/.test(s) ? "launch" : (title.pubDate > S.today ? "preorder" : "backlist");
+      UI.wiz = freshWizard(); const W = UI.wiz;
+      W.titleId = title.id; W.brief.objective = objective; if (budget) W.brief.budget = budget; W.brief.goal = q;
+      wizPlan();
+      UI.askAnswer = { html: `Drafted a ${objective === "preorder" ? "pre-order" : objective} plan for <b>${esc(title.title)}</b> with ${money(W.brief.budget)} across ${D.PLATFORM_ORDER.filter((p) => W.splitEdit[p]).length} platforms, keywords from CHAPTR Reedy and copy from CHAPTR Amplify. Nothing is created until you approve.`, btn: { label: "Review the plan", act: "nav", id: "launch" } };
+      return;
+    }
+    if (title && wantsLaunch && !title.unlaunched) { const c = campaignForTitle(title.id); UI.askAnswer = { html: `<b>${esc(title.title)}</b> already has a ${c.status} campaign. Open its dashboard to adjust it.`, btn: { label: "Open dashboard", act: "open-title", id: c.id } }; return; }
+    if (title) {
+      const c = campaignForTitle(title.id);
+      if (!c) { UI.askAnswer = { html: `<b>${esc(title.title)}</b> has no campaign yet. It publishes ${fmtDate(title.pubDate)}.`, btn: { label: "Start the launch", act: "launch-title", id: title.id } }; return; }
+      const h = healthOf(c);
+      UI.askAnswer = { html: `<b>${esc(title.title)}</b>: ${h.status === "done" || h.status === "scheduled" ? h.label : `health ${h.score}, ${h.label.toLowerCase()}`}. ${esc(h.reasons[0].text)}.${h.reasons.length > 1 ? ` Also: ${esc(h.reasons[1].text.toLowerCase())}.` : ""}`, btn: { label: "Open dashboard", act: "open-title", id: c.id } };
+      return;
+    }
+    if (/worst|most help|risk|attention|struggl|problem/.test(s)) {
+      const w = liveCampaigns().map((c) => ({ c, h: healthOf(c) })).sort((a, b) => a.h.score - b.h.score)[0];
+      const t = E.titleById(w.c.titleId);
+      UI.askAnswer = { html: `<b>${esc(t.title)}</b> needs the most help (health ${w.h.score}). ${esc(w.h.reasons[0].text)}.`, btn: { label: "Open dashboard", act: "open-title", id: w.c.id } };
+      return;
+    }
+    if (/budget|spend|pacing|overspend|cap|money/.test(s)) {
+      const live = liveCampaigns(); const b = E.sum(live, (c) => c.budget), a = live.map((c) => E.campaignPacing(S, c));
+      const fc = E.sum(a, (x) => x.forecast), off = a.filter((x) => x.tier !== "ok").length;
+      UI.askAnswer = { html: `Live campaigns are forecast to finish at ${money(fc)} against ${money(b)} approved (${signed(fc / b - 1)}). ${off ? `${off} title${off > 1 ? "s are" : " is"} off plan.` : "Every title is on plan."}`, btn: { label: "Open budget and pacing", act: "nav", id: "budget" } };
+      return;
+    }
+    if (/approv|decide|decision|need me|to do|todo/.test(s)) { UI.askAnswer = { html: `${needsMe().length} decision${needsMe().length === 1 ? "" : "s"} need you as ${E.ROLES[UI.role]}.`, btn: { label: "Open approvals", act: "nav", id: "approvals" } }; return; }
+    if (/report|result|learn/.test(s)) { UI.askAnswer = { html: "Ninefold Harbor's final report is ready, with four recommendations for your next launch.", btn: { label: "Open the report", act: "open-report", id: "cmp_ninefold" } }; return; }
+    UI.askAnswer = { html: "I can start a launch from an ISBN, a budget and a goal, or tell you how a title, the budget or the approval queue is doing. Try one of the examples." };
+  }
   const PRI = { urgent: "Urgent", today: "Today", week: "This week", fyi: "For your information" };
   function taskCard(t, i) {
     const tt = t.title_id ? E.titleById(t.title_id) : null;
@@ -234,9 +285,17 @@
     const doneToday = S.audit.filter((a) => a.actor === "human" && a.ts.startsWith(S.today)).length;
     const live = liveCampaigns();
     const hs = live.map((c) => ({ c, h: healthOf(c), t: E.titleById(c.titleId) })).sort((a, b) => a.h.score - b.h.score);
-    return `<div class="view-head"><div><div class="eyebrow">Action center · ${E.ROLES[UI.role]}</div><h1>${todo.length ? `${todo.length} thing${todo.length > 1 ? "s" : ""} need you today` : "You're all caught up"}</h1>
-      <p>MATLOC watched spend and performance on all four platforms overnight. These are the only items that need a person, in the order to do them. Everything else is on track.</p></div>
-      <div class="progress-pill" aria-label="Progress today"><b class="num">${doneToday}</b> done today<span class="bar-p"><span style="width:${Math.min(100, (doneToday / Math.max(1, doneToday + todo.length)) * 100)}%"></span></span></div></div>
+    const A = UI.askAnswer;
+    return `<div class="view-head hero"><div class="hero-row"><div class="stack" style="gap:14px"><div class="eyebrow" style="margin:0">Action center · ${E.ROLES[UI.role]}</div>
+        <h1>${todo.length ? `<mark class="hl">${todo.length} thing${todo.length > 1 ? "s" : ""}</mark> need you today.` : `You're <mark class="hl">all caught up</mark>.`}</h1>
+        <p class="sub">Argus watched spend and performance on all four platforms overnight. These are the only items that need a person, in the order to do them. Everything else is on track.</p></div>
+        <div class="stack" style="align-items:flex-end;gap:14px">${ARGUS_EYE}<div class="progress-pill" aria-label="Progress today"><b class="num">${doneToday}</b> done today<span class="bar-p"><span style="width:${Math.min(100, (doneToday / Math.max(1, doneToday + todo.length)) * 100)}%"></span></span></div></div></div>
+      <form class="ask-wrap" id="ask-form" data-tour="ask" autocomplete="off">
+        <label class="ask-label" for="ask-input">Ask <b>Argus</b> anything, or start a launch with an ISBN, a budget and a goal</label>
+        <div class="ask"><input id="ask-input" placeholder="Launch 978-1-250-99006-6 with $35k for pre-orders, book clubs and literary fiction readers" value="${esc(UI.askText || "")}"><button class="go" type="submit" aria-label="Ask Argus"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5"/></svg></button></div>
+        <div class="ask-try">${ASK_EXAMPLES.map((x) => `<button type="button" data-act="ask-try" data-q="${esc(x)}">${esc(x)}</button>`).join("")}</div>
+        ${A ? `<div class="ask-answer" role="status"><span>${A.html}</span>${A.btn ? `<button type="button" class="btn primary sm" data-act="${A.btn.act}" data-id="${A.btn.id || ""}">${esc(A.btn.label)}</button>` : ""}</div>` : ""}
+      </form></div>
     <div class="grid g-main">
       <section class="stack" data-tour="tasks" aria-label="Your tasks">${tasks.length ? tasks.map(taskCard).join("") : '<div class="panel panel-b">Nothing needs you right now. The agents will add items here when a decision is needed.</div>'}</section>
       <aside class="stack">
@@ -415,7 +474,7 @@
     });
     const st = S.settings;
     return `<div class="view-head"><div><div class="eyebrow">Budget steward</div><h1>Budget and pacing</h1>
-      <p>MATLOC watches spend hourly so marketers do not have to log into four ad platforms. Every level of the budget (imprint, title, platform, flight phase) shows approved, spent and forecast, so finance and marketing see the same numbers.</p></div></div>
+      <p>ARGUS watches spend hourly so marketers do not have to log into four ad platforms. Every level of the budget (imprint, title, platform, flight phase) shows approved, spent and forecast, so finance and marketing see the same numbers.</p></div></div>
 
     <div class="panel" data-tour="imprint-budgets"><div class="panel-h"><h3>Imprint budgets (fiscal year)</h3><span class="muted small">Finance view</span></div><div class="panel-b tbl-wrap"><table><thead><tr><th>Imprint</th><th class="n">Annual budget</th><th class="n">Committed</th><th class="n">Spent</th><th class="n">Forecast</th><th class="n">Uncommitted</th></tr></thead><tbody>
       ${imps.map((x) => `<tr><td>${esc(x.im.name)}</td><td class="n">${money(x.im.annualBudget)}</td><td class="n">${money(x.committed)}</td><td class="n">${money(x.spent)}</td><td class="n">${money(x.fc)}</td><td class="n">${money(x.im.annualBudget - x.committed)}</td></tr>`).join("")}
@@ -445,7 +504,7 @@
       </div></div>
     </div>
 
-    <div class="panel" data-tour="recon"><div class="panel-h"><h3>Reconciliation: October</h3><span class="muted small">Ledger vs. platform-reported vs. invoice</span></div><div class="panel-b tbl-wrap"><table><thead><tr><th>Platform</th><th class="n">Platform-reported</th><th class="n">MATLOC ledger</th><th class="n">Invoice</th><th class="n">Difference</th><th>Explanation</th><th>Status</th></tr></thead><tbody>
+    <div class="panel" data-tour="recon"><div class="panel-h"><h3>Reconciliation: October</h3><span class="muted small">Ledger vs. platform-reported vs. invoice</span></div><div class="panel-b tbl-wrap"><table><thead><tr><th>Platform</th><th class="n">Platform-reported</th><th class="n">ARGUS ledger</th><th class="n">Invoice</th><th class="n">Difference</th><th>Explanation</th><th>Status</th></tr></thead><tbody>
       <tr><td>${plat("meta")}</td><td class="n">$18,412.60</td><td class="n">$18,412.60</td><td class="n">$18,371.40</td><td class="n">−$41.20</td><td class="small">Invalid-traffic credit applied on invoice</td><td><span class="pill ok">Explained</span></td></tr>
       <tr><td>${plat("google")}</td><td class="n">$9,880.15</td><td class="n">$9,880.15</td><td class="n">$9,902.77</td><td class="n">+$22.62</td><td class="small">Account timezone (PT) vs. ledger (ET) day cut-off</td><td><span class="pill ok">Explained</span></td></tr>
       <tr><td>${plat("tiktok")}</td><td class="n">$9,105.33</td><td class="n">$9,105.33</td><td class="n">$9,742.70</td><td class="n">+$637.37</td><td class="small">Sales tax line on invoice (7%)</td><td><span class="pill ok">Explained</span></td></tr>
@@ -515,7 +574,7 @@
     <div class="grid g2">
       <div class="panel" data-tour="funnel"><div class="panel-h"><h3>Funnel</h3><span class="muted small">Log scale</span></div><div class="panel-b funnel">
         ${fun.map((f) => `<div class="funnel-row ${f.v == null ? "unknown" : ""}"><div>${f.k}<div class="small muted">${f.note}</div></div><div class="bar-f" style="width:${f.v == null ? 100 : Math.max(2, (Math.log10(Math.max(f.v, 1)) / maxF) * 100)}%"></div><div class="n num">${f.v == null ? "unknown" : Math.round(f.v).toLocaleString()}</div></div>`).join("")}
-        <p class="small muted">MATLOC never presents platform-attributed sales as incremental. Retail sales outside Amazon are measured with BookScan lift and holdout tests, not per click.</p></div></div>
+        <p class="small muted">ARGUS never presents platform-attributed sales as incremental. Retail sales outside Amazon are measured with BookScan lift and holdout tests, not per click.</p></div></div>
       <div class="panel" data-tour="native"><div class="panel-h"><h3>Platform-native vs. normalized</h3></div><div class="panel-b tbl-wrap"><table><thead><tr><th>Platform</th><th>Native metric</th><th class="n">Native value</th><th class="n">Cost / qualified action</th><th class="n">CTR</th></tr></thead><tbody>
         ${D.PLATFORM_ORDER.filter((p) => c.platformBudget[p]).map((p) => { const x = E.totals(c, p); return `<tr><td>${plat(p)}</td><td class="small">${D.PLATFORMS[p].native.action}</td><td class="n">${Math.round(x.actions).toLocaleString()}</td><td class="n">$${x.cpa.toFixed(2)}</td><td class="n">${pct(x.ctr, 2)}</td></tr>`; }).join("")}
       </tbody></table><p class="small muted" style="margin-top:8px">Each platform grades its own homework, so the native name is always shown next to the normalized number.</p></div></div>
@@ -549,6 +608,7 @@
         <label class="f" for="b-end">Flight end<input class="input" id="b-end" type="date" value="${b.end}" data-brief="end"></label>
         <label class="f" for="b-dest">Destination<select class="input" id="b-dest" data-brief="destination">${["Imprint where-to-buy page", "Amazon detail page", "Macmillan direct-to-consumer"].map((v) => `<option ${b.destination === v ? "selected" : ""}>${v}</option>`).join("")}</select></label>
         <label class="f" for="b-ex">Exclusions<input class="input" id="b-ex" value="${esc(b.exclusions)}" data-brief="exclusions"></label>
+        <label class="f" for="b-goal" style="grid-column:1/-1">Goals, in a sentence<textarea class="input" id="b-goal" rows="2" data-brief="goal">${esc(b.goal || "")}</textarea></label>
         <div style="grid-column:1/-1" class="row"><button class="btn primary" data-act="wiz-plan">Draft the plan</button><span class="small muted">The Planner uses title metadata, genre benchmarks and past campaigns. Budgets above $25,000 need a marketing director.</span></div>
       </div></div>`;
     } else if (W.step === 2) {
@@ -562,12 +622,13 @@
         <div class="panel"><div class="panel-h"><h3>Pacing curve tied to the pub date</h3><div class="legend"><span><i style="background:var(--ink-3)"></i>Pre-order</span><span><i style="background:var(--accent)"></i>Launch week</span><span><i style="background:var(--ink-2)"></i>Sustain</span></div></div><div class="panel-b"><div class="chart" id="curve"></div></div></div>
       </div><div class="stack">
         <div class="panel"><div class="panel-h"><h3>Why this plan</h3></div><div class="panel-b"><ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px">${P.why.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div></div>
+        <div class="panel"><div class="panel-h"><h3>Keywords and subtitles</h3><span class="int-chip">from <b>CHAPTR Reedy</b> · simulated</span></div><div class="panel-b small stack"><div class="row">${["literary fiction 2027", "book club books", "family saga novels", "the orchard at low tide", "marguerite sollis", "books like winter kept", "sisters novel", "coastal fiction"].map((k) => `<span class="tag">${k}</span>`).join("")}</div><div>Amazon subtitle suggestion: <i>A Novel of Three Sisters and the Sea</i></div></div></div>
         <div class="panel"><div class="panel-h"><h3>Tracking setup</h3></div><div class="panel-b small stack"><div>Meta Pixel + Conversions API and TikTok Pixel on the where-to-buy page; retailer click-out events; Amazon Attribution tags.</div>${D.PLATFORM_ORDER.map((p) => `<div class="mono" style="word-break:break-all">${P.utm(p)}</div>`).join("")}</div></div>
         <div class="policy"><b>What the agent will do next</b>Draft copy variants per platform, then run compliance checks. Nothing is created on any platform until you approve.</div>
         <div><button class="btn primary" data-act="wiz-go" data-step="3" ${sumSplit === 100 ? "" : "disabled"}>Accept plan and draft creative</button></div>
       </div></div>`;
     } else if (W.step === 3) {
-      body = `<div class="grid g-main"><div class="panel" data-tour="wiz-copy"><div class="panel-h"><h3>Copy variants</h3><span class="small muted">Agent-drafted, editable. Limits per platform.</span></div><div class="panel-b copy-grid">
+      body = `<div class="grid g-main"><div class="panel" data-tour="wiz-copy"><div class="panel-h"><h3>Copy variants</h3><span class="int-chip">drafted with <b>CHAPTR Amplify</b> · simulated</span></div><div class="panel-b copy-grid">
         ${D.PLATFORM_ORDER.map((p) => { const lim = E.LIMITS[p]; const len = W.copy[p].length; return `<label class="f" for="copy-${p}"><span class="row" style="justify-content:space-between">${plat(p)}<span class="muted">${lim.label}</span></span><textarea class="input" id="copy-${p}" data-copy="${p}" rows="3">${esc(W.copy[p])}</textarea><span class="counter ${len > lim.max ? "over" : ""}" id="cnt-${p}">${len}/${lim.max}</span></label>`; }).join("")}
       </div></div>
       <div class="panel" data-tour="wiz-assets"><div class="panel-h"><h3>Assets from the library</h3></div><div class="panel-b stack">
@@ -618,6 +679,10 @@
   function wizPlan() {
     const W = UI.wiz, t = E.titleById(W.titleId);
     W.plan = E.draftPlan(t, W.brief);
+    if (W.brief.goal) {
+      const g = W.brief.goal.toLowerCase();
+      W.plan.why.unshift(`Your brief: "${W.brief.goal}".${/book ?club/.test(g) ? " Book-club intent favors Meta interest audiences and Google discussion-guide searches." : ""}${/tiktok|booktok|young/.test(g) ? " BookTok intent keeps TikTok at full weight." : ""}`);
+    }
     W.splitEdit = {}; D.PLATFORM_ORDER.forEach((p) => (W.splitEdit[p] = Math.round(W.plan.split[p] * 100)));
     W.step = 2; W.checks = null;
   }
@@ -716,6 +781,8 @@
       if (home) nav(home); else { render(); document.body.classList.add("drawer-open"); const q = $("#title-q"); if (q) q.focus(); }
     },
     "goto-prop": (d) => { UI.flash = d.id; nav("approvals"); },
+    nav: (d) => nav(d.id),
+    "ask-try": (d) => { askArgus(d.q); render(); },
     nudge: (d) => { UI.nudged[d.id] = true; const p = S.proposals.find((x) => x.proposal_id === d.id); const w = p.requires_approval_from.filter((r) => !p.approvals.includes(r)).map((r) => E.ROLES[r]); S.audit.unshift({ ts: S.today + "T09:15:00Z", actor: "human", who: E.ROLES[UI.role], action: "Sent reminder to " + w.join(", "), entity: d.id, before: "-", after: "Reminder sent (email + Slack)" }); toast(`Reminder sent to ${w.join(" and ")}.`); render(); },
     "launch-title": (d) => { UI.wiz = freshWizard(); UI.wiz.titleId = d.id; UI.wiz.step = 1; UI.mode = "launch"; nav("launch"); },
     "open-report": (d) => { UI.reportCampaign = d.id; UI.seenReports[d.id] = true; nav("report"); },
@@ -772,6 +839,11 @@
     }
     if (ev.target.closest(".rail a[href]") && !ev.target.closest("[data-act]")) closeDrawer();
   });
+  document.addEventListener("submit", (ev) => {
+    if (ev.target.id !== "ask-form") return;
+    ev.preventDefault();
+    askArgus($("#ask-input").value); render();
+  });
   document.addEventListener("input", (ev) => {
     const el = ev.target;
     if (el.id === "title-q") { UI.titleQuery = el.value; const pos = el.selectionStart; renderRail(); const q = $("#title-q"); q.focus(); q.setSelectionRange(pos, pos); return; }
@@ -796,7 +868,7 @@
   // ---------------- public API for the guided tour ----------------
   window.APP = {
     render, get S() { return S; }, UI, ACT, toast,
-    reset() { S = E.makeState(); UI.wiz = freshWizard(); UI.edit = {}; UI.reject = {}; UI.exec = {}; UI.role = "imprint_marketer"; UI.budgetCampaign = "cmp_salt"; UI.titleCampaign = "cmp_glass"; UI.reportCampaign = "cmp_ninefold"; UI.expanded = { cmp_salt: true }; UI.nudged = {}; UI.seenReports = {}; UI.mode = null; UI.titleQuery = ""; render(); },
+    reset() { S = E.makeState(); UI.wiz = freshWizard(); UI.edit = {}; UI.reject = {}; UI.exec = {}; UI.role = "imprint_marketer"; UI.budgetCampaign = "cmp_salt"; UI.titleCampaign = "cmp_glass"; UI.reportCampaign = "cmp_ninefold"; UI.expanded = { cmp_salt: true }; UI.nudged = {}; UI.seenReports = {}; UI.mode = null; UI.titleQuery = ""; UI.askText = ""; UI.askAnswer = null; render(); },
     buildTasks: () => buildTasks(),
     setRole(r) { UI.role = r; render(); },
     approve,
