@@ -455,7 +455,7 @@
       <div class="ptable" data-tour="platforms"><div class="prow h"><span>Platform</span><span>Spend</span><span>Live pacing</span><span class="r">Results</span><span class="r hide-md">Cost per result</span></div>${platRows}</div>
       <div class="sec-head"><h2 class="sec">Sales</h2><span class="note">Last 16 weeks</span></div>
       ${salesChart(t, E.titleSales(S, id))}
-      ${t.real ? `<p class="small muted title-real" style="margin-top:14px">Title details are from us.macmillan.com. All ad and sales numbers on this page are illustrative.</p>` : ""}`;
+      `;
   }
 
   // ---------------- router ----------------
