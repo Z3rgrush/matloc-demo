@@ -142,7 +142,10 @@
     D.PLATFORM_ORDER.forEach((p) => {
       const pl = c.platforms[p];
       if (pl.status !== "active") return;
-      let spend = plannedDaily(c, p, date) * pl.deliver * noise(`${c.id}${p}${date}`, 0.9, 1.1);
+      // Real delivery drifts in multi-day waves (auction pressure, weekends), not just daily jitter.
+      const dayN = daysBetween(c.start, date), ph = noise(c.id + "phase", 0, 6.28);
+      const wave = 1 + 0.16 * Math.sin(dayN / 4.1 + ph) + 0.07 * Math.sin(dayN / 1.7 + ph * 2);
+      let spend = plannedDaily(c, p, date) * pl.deliver * wave * noise(`${c.id}${p}${date}`, 0.88, 1.12);
       if (spike && spike.platform === p) spend = spike.amount;
       pl.daily.push(dayMetrics(c, p, date, spend));
     });
@@ -773,17 +776,21 @@
     const camps = s.campaigns.filter((c) => c.titleId === titleId);
     const base = GENRE_BASE[t.genre] || 80;
     const out = [];
-    let preorders = 0;
+    let preorders = 0, prevSpend = 0;
     for (let w = weeks - 1; w >= 0; w--) {
       const end = addDays(s.today, -1 - 7 * w), start = addDays(end, -6);
       let spend = 0;
       camps.forEach((c) => D.PLATFORM_ORDER.forEach((p) => (c.platforms[p] ? c.platforms[p].daily : []).forEach((r) => { if (r.date >= start && r.date <= end) spend += r.spend; })));
       const sincePub = daysBetween(t.pubDate, end);
-      const n = noise(titleId + end + "units", 0.95, 1.05);
+      const n = noise(titleId + end + "units", 0.84, 1.16);
+      // Sales respond to this week's and last week's spend, plus organic swings (press, word of mouth).
+      const drive = spend * 0.15 + prevSpend * 0.07;
+      const organic = noise(titleId + end + "organic", 0, 1) > 0.82 ? base * noise(titleId + end + "lift", 0.6, 1.4) : 0;
+      prevSpend = spend;
       let units = 0, pre = 0;
-      if (sincePub < 0) { pre = Math.round((4 + base * 0.05 + spend * 0.15) * n); preorders += pre; }
-      else if (sincePub < 7) { units = Math.round((base * 2 + spend * 0.2) * n) + preorders; preorders = 0; }
-      else { const wk = Math.floor(sincePub / 7); units = Math.round((base * (0.35 + 1.2 * Math.pow(0.55, wk)) + spend * 0.2) * n); }
+      if (sincePub < 0) { pre = Math.round((4 + base * 0.05 + drive * 0.7 + organic * 0.2) * n); preorders += pre; }
+      else if (sincePub < 7) { units = Math.round((base * 2 + drive + organic) * n) + preorders; preorders = 0; }
+      else { const wk = Math.floor(sincePub / 7); units = Math.round((base * (0.35 + 1.2 * Math.pow(0.55, wk)) + drive + organic) * n); }
       out.push({ start, end, spend, units, preorders: pre, pubWeek: sincePub >= 0 && sincePub < 7 });
     }
     return out;

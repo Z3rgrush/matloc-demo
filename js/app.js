@@ -4,7 +4,7 @@
   "use strict";
   const D = window.ARGUS_DATA, E = window.ARGUS, C = window.ARGUS_CHARTS;
   const { esc, money } = C;
-  const KEY = "argus-state-v4";
+  const KEY = "argus-state-v5";
 
   // ---------------- state ----------------
   const store = {
