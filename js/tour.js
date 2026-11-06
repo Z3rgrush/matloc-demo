@@ -1,4 +1,4 @@
-/* Guided walkthrough: a spotlight tour that drives the live demo.
+/* Guided walkthrough: a spotlight tour that drives the live app.
    Every action step has a "Do it for me" button so a presenter can run the story one-handed. */
 (function () {
   "use strict";
@@ -32,7 +32,7 @@
     { route: "launch/" + ORCHARD, prep: genFor, target: '[data-tour="variants"]', title: "Ready-to-run ads", body: "<p>Four ads, each sized and written for its platform and checked against character limits, plus keywords and an Amazon subtitle from CHAPTR Reedy.</p>" },
     { route: "launch/" + ORCHARD, prep: genFor, target: '[data-tour="signoff"]', title: "Plan and sign-off", body: "<p>Set a budget and goal and Argus drafts the split across platforms, explains why, and runs compliance checks. Budgets over $25,000 also need the marketing director.</p>", do: signAll, doLabel: "Sign off for me" },
     { route: "launch/" + ORCHARD, prep: signAll, target: '[data-tour="launched"]', title: "It's queued", body: "<p>Argus builds the campaign paused on every platform, reads each setting back, and starts on the scheduled date. From here it shows up in the reporting center.</p>" },
-    { route: "", title: "That's Argus", body: "<p>One page per title, plus three paths: see what needs changing, launch from an ISBN, and understand any title. Argus does the busywork, and people make the calls.</p><p>Use <b>Reset demo</b> at the bottom of the page to start over.</p>" }
+    { route: "", title: "That's Argus", body: "<p>One page per title, plus three paths: see what needs changing, launch from an ISBN, and understand any title. Argus does the busywork, and people make the calls.</p><p>Use <b>Reset</b> at the bottom of the page to start over.</p>" }
   ];
 
   let i = -1, spot, card;
@@ -106,7 +106,7 @@
   window.addEventListener("argus:render", () => { if (i >= 0) requestAnimationFrame(place); });
   document.addEventListener("click", (e) => { if (e.target.closest("[data-tour-open]")) open(0); });
   document.getElementById("tour-start").addEventListener("click", () => open(0));
-  document.getElementById("reset").addEventListener("click", () => { close(); A.reset(); A.toast("Demo reset."); });
+  document.getElementById("reset").addEventListener("click", () => { close(); A.reset(); A.toast("Reset."); });
   window.TOUR = { open, close, steps: STEPS };
   if (location.hash === "#tour") { history.replaceState(null, "", location.pathname); open(0); }
 })();

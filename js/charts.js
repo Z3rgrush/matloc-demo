@@ -1,4 +1,4 @@
-/* Hand-built SVG charts and book covers (no chart library needed for the demo). */
+/* Hand-built SVG charts and book covers (no chart library needed). */
 (function (root) {
   "use strict";
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -8,6 +8,7 @@
   // Generated book cover (fictional titles, no real artwork).
   function cover(t, w = 34) {
     const h = Math.round(w * 1.5);
+    if (t.coverImg) return `<img class="cover" src="${t.coverImg}" width="${w}" height="${Math.round(w * 1.546)}" alt="Cover of ${esc(t.title)}" style="object-fit:cover">`;
     const c = t.cover;
     const motif = {
       sword: `<path d="M50 34 L54 40 L54 82 L46 82 L46 40Z" fill="${c.fg}"/><rect x="36" y="82" width="28" height="5" rx="2" fill="${c.fg}"/><rect x="47" y="87" width="6" height="12" fill="${c.fg}"/><circle cx="50" cy="102" r="4" fill="${c.fg}"/>`,

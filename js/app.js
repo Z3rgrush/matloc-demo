@@ -1,4 +1,4 @@
-/* ARGUS demo app: a three-path index (reporting, launch, title reporting).
+/* ARGUS app: a three-path index (reporting, launch, title reporting).
    Views are plain template strings; clicks go through one delegated [data-act] handler. */
 (function () {
   "use strict";
@@ -57,7 +57,7 @@
     const l = (r, label) => `<a href="#${r}"${active === r ? ' aria-current="page"' : ""}>${label}</a>`;
     return `<header class="top"><a class="mark-sm" href="#" aria-label="ARGUS home">argus</a>
       <nav class="seg" aria-label="Sections">${l("", "Overview")}${l("reporting", "Reporting")}${l("launch", "Launch")}${l("titles", "Titles")}</nav><a class="btn sm" href="#menu">Menu</a>
-      <span class="spacer"></span><span class="pill num" title="The demo's simulated today">${fmt(S.today, true)}</span></header>`;
+      <span class="spacer"></span><span class="pill num" title="Today">${fmt(S.today, true)}</span></header>`;
   }
   const back = (href, label) => `<a class="btn sm" href="${href}">← ${label}</a>`;
   function healthBits(c) {
@@ -230,7 +230,7 @@
   }
   const FORMATS = { meta: "Meta · 4:5 feed", google: "Google · Demand Gen", tiktok: "TikTok · 9:16", amazon: "Amazon · Sponsored Brands" };
   function adSvg(t, p, headline, cta) {
-    const inner = C.cover(t, 100).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "");
+    const inner = t.coverImg ? `<image href="${t.coverImg}" width="100" height="150" preserveAspectRatio="xMidYMid slice"/>` : C.cover(t, 100).replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "");
     const words = headline.split(" "), lines = [];
     words.forEach((w) => { const l = lines[lines.length - 1]; if (l && (l + " " + w).length <= 20) lines[lines.length - 1] = l + " " + w; else lines.push(w); });
     const fg = t.cover.fg, bg = t.cover.bg;
@@ -272,7 +272,7 @@
       const cards = D.PLATFORM_ORDER.map((p) => { const v = L.variants[p], lim = E.LIMITS[p]; return `<div class="variant">${adSvg(t, p, v.headline, v.cta)}<div class="fit"><span>${FORMATS[p]}</span><span>${v.copy.length}/${lim.max}</span></div><div class="copy">${esc(v.copy)}</div></div>`; }).join("");
       return `<div class="panel" data-tour="variants"><div class="variants">${cards}</div>
         <div><div class="field"><span>Keywords and subtitle from CHAPTR Reedy</span></div><div class="checks" style="margin-top:8px">${R.keywords.map((k) => `<span class="tag">${esc(k)}</span>`).join("")}</div><p class="small" style="margin-top:10px">Amazon subtitle suggestion: <i>${esc(R.subtitle)}</i></p></div>
-        <div class="row-flex"><button class="btn" data-act="gen">Regenerate</button><span class="small muted">Simulated in this demo. In production these come from Amplify and Reedy.</span></div></div>`;
+        <div class="row-flex"><button class="btn" data-act="gen">Regenerate</button><span class="small muted">Drafted by CHAPTR Amplify and Reedy.</span></div></div>`;
     }
     return "";
   }
@@ -468,7 +468,7 @@
     $("#view").innerHTML = html;
     const key = r + "/" + (a || "");
     if (key !== lastRoute) { window.scrollTo(0, 0); lastRoute = key; }
-    document.title = r === "home" ? "ARGUS Demo" : "ARGUS · " + ({ menu: "Menu", reporting: "Reporting", campaign: "Campaign", launch: "Launch", titles: "Titles", title: "Title" }[r] || "Demo");
+    document.title = r === "home" ? "ARGUS" : "ARGUS · " + ({ menu: "Menu", reporting: "Reporting", campaign: "Campaign", launch: "Launch", titles: "Titles", title: "Title" }[r] || "Overview");
     window.dispatchEvent(new Event("argus:render"));
   }
   window.addEventListener("hashchange", render);

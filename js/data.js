@@ -1,11 +1,11 @@
-/* ARGUS demo data.
+/* ARGUS sample data.
  * Every imprint, title, ISBN, and number in this file is fictional and exists only
- * to drive the demo. Swap in real ONIX / platform exports later via the same shapes.
+ * to drive the app. Swap in real ONIX / platform exports later via the same shapes.
  */
 (function (root) {
   "use strict";
 
-  // The demo's "today". Spend history runs up to the day before.
+  // The simulated "today". Spend history runs up to the day before.
   const DEMO_TODAY = "2026-11-05";
 
   const PLATFORMS = {
@@ -32,7 +32,7 @@
       imprint: "bramble", pubDate: "2026-08-25", format: "Hardcover", price: 29.99, pages: 448,
       bisac: "Fiction / Fantasy / Romantic", genre: "Fantasy / Romance", ageBand: "Adult",
       comps: ["Swordheart", "Paladin's Grace"], flags: [], asin: "B0DEMO0011", real: true,
-      cover: { bg: "#3a1d35", fg: "#f4b6c8", motif: "sword" }
+      cover: { bg: "#3b1650", fg: "#f6e9d6", motif: "sword" }, coverImg: "assets/covers/9781250400086.jpg"
     },
     {
       id: "9781250990028", isbn: "978-1-250-99002-8", title: "Salt and Signal", author: "Daniel Okafor",

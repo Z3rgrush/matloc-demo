@@ -1,9 +1,9 @@
-/* ARGUS agent + governance engine (demo).
+/* ARGUS agent + governance engine.
  *
  * Layering mirrors §7.1 of the scoping plan:
  *   - "Agents" (Planner, Budget steward, Monitor, Optimizer, Reporter) REASON and emit
  *     structured proposals. In production these are LLM calls with tools; here they are
- *     deterministic heuristics seeded from the Appendix A playbook so the demo is repeatable.
+ *     deterministic heuristics seeded from the Appendix A playbook so every run is repeatable.
  *   - The POLICY ENGINE is plain deterministic code. It validates every proposal and is the
  *     only thing that decides who must approve and whether an action may execute.
  *   - PLATFORM ADAPTERS execute approved actions only, then read back to verify.
@@ -572,7 +572,7 @@
     return found;
   }
 
-  // Seed alerts present at demo start
+  // Seed alerts present at start
   function seedAlerts(s) {
     const salt = s.campaigns.find((c) => c.id === "cmp_salt");
     const hearts = s.campaigns.find((c) => c.id === "cmp_hearts");
