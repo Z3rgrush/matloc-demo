@@ -14,45 +14,36 @@ No build step and no dependencies. Either:
 - serve the folder: `npm start` (then open http://localhost:8080), or
 - turn on GitHub Pages for the `main` branch (root folder).
 
-Open `index.html#tour` to start straight into the guided tour, or press **Guided tour** in the top bar.
+Open `index.html#tour` to start straight into the guided tour, or press **Guided tour** on the home screen.
 
 Run the engine tests with `npm test` (Node 20+).
 
 ## What the demo covers
 
-The left menu keeps **Action center** and **Approvals** pinned, then offers three modes: **Reporting** (portfolio, budget and pacing, reports, audit log), **Launch** (new campaign, titles ready to launch, scheduled campaigns) and **Titles** (search any title's dashboard, sorted by health). It collapses to icons and becomes a drawer on phones.
+The home screen is a simple menu with three paths.
 
-| Screen | What it shows | Scoping plan |
-|---|---|---|
-| **Action center** (home) | An "Ask Argus" box (type an ISBN, budget and goal to draft a launch, or ask about a title or the budget) and an ordered to-do list built from live state: safety stops first, then decisions with the agent's recommendation, reminders, launches due, reports to read. Title health for every live title | §3.1 G2, G5, §7.7 |
-| **Portfolio** | Live budget, spend, forecast, approvals waiting, alerts, what the agents did overnight | §7.6 Portfolio, §3.1 G2 |
-| **Approvals** | Structured proposals (evidence, impact, risk, rollback, expiry), approve / edit / reject with reasons / snooze, multi-role approval chains, proposals held by guardrails | §7.3, §7.4 |
-| **Budget & pacing** | Imprint → title → platform budgets, pacing against the pub-date curve, forecast, guardrail tiers, emergency auto-pause, kill switch, reconciliation | §7.7 |
-| **Title dashboard** | Health score (0 to 100) with plain-language reasons and a fix button for each, funnel with honest source labels, native vs. normalized metrics, creative leaderboard with fatigue, optimization log | §7.6, §8 |
-| **Launch a campaign** | 7-step title-first wizard: metadata, brief, Planner draft, copy with limits, blocking compliance checks, threshold approvals, post-launch read-back | §7.5, §10.1 |
-| **Campaign report** | Auto-generated end-of-campaign report with caveats and next-time plan | §7.6, §3.1 G6 |
-| **Audit log** | Every approval, edit, execution and safety stop, with before/after state | §3.1 G7, §10.2 |
+| Path | What it does |
+|---|---|
+| **Reporting center** | Every active and ended campaign, sorted worst health first, with a count of suggestions. Open a campaign to see spend, pacing, results and health, then Argus's suggested changes with evidence, expected impact, confidence and rollback. Approve, snooze or dismiss each one. Ended campaigns show a report and suggestions for next time. **Simulate next day** runs the overnight checks (the first run triggers a spend spike and an automatic pause). |
+| **Launch center** | Search by ISBN or title, see the product metadata, then **Upload creative** (Argus checks each file's size for each platform) or **Generate creative** (simulated CHAPTR Amplify ads plus CHAPTR Reedy keywords and subtitle). Set a budget, goal and dates, review the platform split and compliance checks, and sign off to schedule. |
+| **Title reporting** | Every title with its total ad spend, sales and campaigns. A title page shows weekly ad spend next to unit sales (pre-orders before pub week), every campaign, the creative that ran, and every change Argus made. |
 
-**Guidance everywhere:** the top bar always shows the single next step, each screen has a "Next best action" banner, the launch wizard explains what to do on each step, and every confirmation says what to do next.
-
-**Title health** (`titleHealth()` in `js/engine.js`) starts at 100 and deducts for a paused platform (35), a platform 20%+ off its curve (22), a fatigued creative (12), a platform on watch (6) and each open decision (4). 80+ is Healthy, 60 to 79 Needs attention, under 60 At risk.
-
-The **Advance one day** button runs a simulated day: connectors "pull" spend, the Budget steward and Monitor check pacing and caps, proposals expire, and executed changes get measured outcomes.
+**Title health** (`titleHealth()` in `js/engine.js`) starts at 100 and deducts for a paused platform (35), a platform 20%+ off its curve (22), a fatigued creative (12), a platform on watch (6) and each open suggestion (4). 80+ is Healthy, 60 to 79 Needs attention, under 60 At risk.
 
 ## Guided walkthrough
 
-- **In-app tour** (`js/tour.js`): 33 steps that drive the live demo, with a "Do it for me" button on every action so a presenter can run the whole story with one hand. Each step cites the scoping-plan section it demonstrates.
-- **Presenter script** ([docs/WALKTHROUGH.md](docs/WALKTHROUGH.md)): a 10-minute talk track, what to click, what to say, and likely questions.
+- **In-app tour** (`js/tour.js`): 18 steps that drive the live demo, with a "Do it for me" button on every action.
+- **Presenter script** ([docs/WALKTHROUGH.md](docs/WALKTHROUGH.md)): a 5 to 7 minute talk track and likely questions.
 
 ## How it's built
 
 ```
-index.html         shell (rail, command bar, view)
+index.html         shell (view + footer)
 css/styles.css     tokens + components, light and dark
 js/data.js         fictional titles, imprints, campaigns, benchmarks, assets
 js/engine.js       agents + policy engine + execution (no DOM; unit-tested)
 js/charts.js       hand-built SVG charts and generated covers
-js/app.js          router, views, actions
+js/app.js          router, home, reporting, launch and title views
 js/tour.js         guided walkthrough
 tests/             node:test suite for the guardrails
 ```
@@ -70,7 +61,7 @@ The engine follows the plan's architecture (§7.1):
 |---|---|
 | Policy engine rules and approval chains | Platform APIs (Meta, Google Ads, TikTok, Amazon Ads) |
 | Pacing curve, forecast and guardrail tiers | LLM reasoning (seeded heuristics) |
-| Hard-cap auto-pause and kill switch | Title metadata feed (ONIX) and asset library |
+| Hard-cap auto-pause and kill switch | Title metadata feed (ONIX), CHAPTR Amplify and Reedy |
 | Compliance checks (claims, limits, clearances, flags) | Sales data (BookScan), reconciliation figures |
 | Report generation from campaign data | Notifications (email, Slack, SMS) |
 

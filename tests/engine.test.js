@@ -121,3 +121,13 @@ test("planner splits sum to the budget and zero TikTok for political titles", ()
   const total = E.sum(Object.values(plan.allocation));
   assert.ok(Math.abs(total - 20000) <= 4);
 });
+
+test("title sales are deterministic, include pre-orders before pub, and rise with spend", () => {
+  const s = fresh();
+  const a = E.titleSales(s, "9781250990066"), b = E.titleSales(fresh(), "9781250990066");
+  assert.deepStrictEqual(a, b);
+  assert.ok(a.every((w) => w.units === 0), "unpublished title has no unit sales yet");
+  const salt = E.titleSales(s, "9781250990028");
+  const pub = salt.find((w) => w.pubWeek);
+  assert.ok(pub && pub.units > Math.max(...salt.filter((w) => !w.pubWeek).map((w) => w.units)), "pub week is the peak");
+});

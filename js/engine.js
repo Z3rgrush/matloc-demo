@@ -763,6 +763,32 @@
     };
   }
 
+
+  // ---------- TITLE SALES (stand-in for a BookScan / retailer feed) ----------
+  // Weekly units for the last N weeks. Before publication the number is pre-orders,
+  // which BookScan reports in pub week. Deterministic so every run is repeatable.
+  const GENRE_BASE = { "Fantasy": 150, "Thriller": 130, "YA Romance": 110, "Nonfiction (Policy)": 45, "Science Fiction": 95, "Literary / Book Club": 100 };
+  function titleSales(s, titleId, weeks = 16) {
+    const t = titleById(titleId);
+    const camps = s.campaigns.filter((c) => c.titleId === titleId);
+    const base = GENRE_BASE[t.genre] || 80;
+    const out = [];
+    let preorders = 0;
+    for (let w = weeks - 1; w >= 0; w--) {
+      const end = addDays(s.today, -1 - 7 * w), start = addDays(end, -6);
+      let spend = 0;
+      camps.forEach((c) => D.PLATFORM_ORDER.forEach((p) => (c.platforms[p] ? c.platforms[p].daily : []).forEach((r) => { if (r.date >= start && r.date <= end) spend += r.spend; })));
+      const sincePub = daysBetween(t.pubDate, end);
+      const n = noise(titleId + end + "units", 0.9, 1.1);
+      let units = 0, pre = 0;
+      if (sincePub < 0) { pre = Math.round((6 + spend * 0.02) * n); preorders += pre; }
+      else if (sincePub < 7) { units = Math.round((base * 5.5 + spend * 0.03) * n) + preorders; preorders = 0; }
+      else { const wk = Math.floor(sincePub / 7); units = Math.round((base * (1 + 3 * Math.pow(0.55, wk)) + spend * 0.03) * n); }
+      out.push({ start, end, spend, units, preorders: pre, pubWeek: sincePub >= 0 && sincePub < 7 });
+    }
+    return out;
+  }
+
   // ---------- TITLE HEALTH ----------
   // One score per campaign that rolls up pacing, creative fatigue, open decisions and alerts.
   // Each reason carries the action that fixes it, so the UI can always offer a next step.
@@ -794,7 +820,7 @@
   }
 
   const api = {
-    titleHealth,
+    titleHealth, titleSales,
     DEFAULT_SETTINGS, ROLES, LIMITS, addDays, daysBetween, flightDates, curveWeight, phaseOf, plannedDaily,
     makeState: () => { const s = makeState(); seedAlerts(s); return s; },
     platformPacing, campaignPacing, rowTier, totals, windowStats, creativeStats,
