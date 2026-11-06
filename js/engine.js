@@ -779,11 +779,11 @@
       let spend = 0;
       camps.forEach((c) => D.PLATFORM_ORDER.forEach((p) => (c.platforms[p] ? c.platforms[p].daily : []).forEach((r) => { if (r.date >= start && r.date <= end) spend += r.spend; })));
       const sincePub = daysBetween(t.pubDate, end);
-      const n = noise(titleId + end + "units", 0.9, 1.1);
+      const n = noise(titleId + end + "units", 0.95, 1.05);
       let units = 0, pre = 0;
-      if (sincePub < 0) { pre = Math.round((6 + base * 0.12 + spend * 0.02) * n); preorders += pre; }
-      else if (sincePub < 7) { units = Math.round((base * 5.5 + spend * 0.03) * n) + preorders; preorders = 0; }
-      else { const wk = Math.floor(sincePub / 7); units = Math.round((base * (1 + 3 * Math.pow(0.55, wk)) + spend * 0.03) * n); }
+      if (sincePub < 0) { pre = Math.round((4 + base * 0.05 + spend * 0.15) * n); preorders += pre; }
+      else if (sincePub < 7) { units = Math.round((base * 2 + spend * 0.2) * n) + preorders; preorders = 0; }
+      else { const wk = Math.floor(sincePub / 7); units = Math.round((base * (0.35 + 1.2 * Math.pow(0.55, wk)) + spend * 0.2) * n); }
       out.push({ start, end, spend, units, preorders: pre, pubWeek: sincePub >= 0 && sincePub < 7 });
     }
     return out;
