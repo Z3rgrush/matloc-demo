@@ -34,7 +34,7 @@ The **Menu** (`#menu`) has three paths.
 
 ## Comparison page
 
-`comparison/index.html` is a one-page pitch graphic: a typical hand-built Tor Books ad next to the set of ads ARGUS drafts for a launch, with annotated mockups and time-to-launch stats. `comparison/ARGUS-vs-traditional-ads.pdf` (1280×1920) and `comparison/ARGUS-vs-traditional-ads-landscape.pdf` (1920×1280) are the same page as single-page PDFs. With GitHub Pages on, it is served at `/comparison/`.
+`comparison/index.html` is a one-page pitch graphic: a typical hand-built Tor Books ad next to the set of ads ARGUS drafts for a launch, with annotated mockups and time-to-launch stats. `comparison/ARGUS-vs-traditional-ads.pdf` (1280×1920) and `comparison/ARGUS-vs-traditional-ads-landscape.pdf` (3840×2560) are the same page as single-page PDFs. With GitHub Pages on, it is served at `/comparison/`.
 
 ## Guided walkthrough
 
