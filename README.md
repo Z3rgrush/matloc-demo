@@ -32,6 +32,10 @@ The **Menu** (`#menu`) has three paths.
 
 **Title health** (`titleHealth()` in `js/engine.js`) starts at 100 and deducts for a paused platform (35), a platform 20%+ off its curve (22), a fatigued creative (12), a platform on watch (6) and each open suggestion (4). 80+ is Healthy, 60 to 79 Needs attention, under 60 At risk.
 
+## Comparison page
+
+`comparison/index.html` is a one-page pitch graphic: a typical hand-built Tor Books ad next to the set of ads ARGUS drafts for a launch, with annotated mockups and time-to-launch stats. `comparison/ARGUS-vs-traditional-ads.pdf` is the same page as a single 1280×1920 PDF. With GitHub Pages on, it is served at `/comparison/`.
+
 ## Guided walkthrough
 
 - **In-app tour** (`js/tour.js`): 21 steps that drive the live demo, with a "Do it for me" button on every action.

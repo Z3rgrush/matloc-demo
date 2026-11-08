@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}</style>
+<title>ARGUS vs Traditional Ads</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@0,400;0,500;0,700;0,800;1,400&family=Gasoek+One&family=Inter+Tight:wght@500;600&display=swap">
+<style>
+/* Layout: two-sided comparison split by a hand-drawn rule; each side = ad visual with numbered pins + matching notes, then a stat row; a to-scale time bar closes the page. */
+:root {
+  --bg: #fde6d7;
+  --panel: #fff3ea;
+  --ink: #221a16;
+  --muted: #6e5a4f;
+  --rule: #b99a88;
+  --accent: #c42a1f;
+  --pin-ring: #fde6d7;
+  --shadow: 0 1px 2px rgba(60, 30, 15, .10), 0 10px 28px -12px rgba(60, 30, 15, .35);
+  --f-display: "Gasoek One", "Arial Black", Impact, sans-serif;
+  --f-body: "Bitter", Georgia, "Times New Roman", serif;
+  --f-ui: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d1613; --panel: #271e1a; --ink: #f7e8dd; --muted: #c2a898; --rule: #6a5246;
+    --accent: #ff6a55; --pin-ring: #1d1613;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -12px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d1613; --panel: #271e1a; --ink: #f7e8dd; --muted: #c2a898; --rule: #6a5246;
+  --accent: #ff6a55; --pin-ring: #1d1613;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -12px rgba(0,0,0,.7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-block: 48px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* Header */
+header.top { display: grid; gap: 10px; margin-bottom: 40px; max-width: 46rem; }
+.eyebrow {
+  font-family: var(--f-ui); font-weight: 600; font-size: 12px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+h1 {
+  margin: 0; font-weight: 800; font-size: clamp(28px, 4.2vw, 44px);
+  line-height: 1.1; letter-spacing: -.01em; text-wrap: balance;
+}
+.lede { margin: 0; color: var(--muted); font-size: 17px; max-width: 40rem; }
+
+/* Comparison */
+.compare {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) auto minmax(0, 8fr);
+  gap: 0 40px;
+  align-items: start;
+}
+.divider {
+  align-self: stretch; width: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='40' viewBox='0 0 14 40'%3E%3Cpath d='M7 0 C 3 6, 11 10, 7 16 S 3 26, 7 32 S 10 38, 7 40' fill='none' stroke='%23b99a88' stroke-width='1.6' stroke-linecap='round' stroke-dasharray='5 4'/%3E%3C/svg%3E");
+  background-repeat: repeat-y; background-position: center top;
+}
+.side { min-width: 0; display: grid; gap: 28px; align-content: start; }
+.side-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.side-head h2 { margin: 0; font-size: 26px; font-weight: 700; line-height: 1.1; }
+.wordmark {
+  font-family: var(--f-display); font-weight: 400; font-size: 40px; line-height: .9;
+  text-transform: lowercase; letter-spacing: -.01em; margin: 0; color: var(--ink);
+}
+.tag {
+  font-family: var(--f-ui); font-size: 12px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+  border: 1.5px solid var(--rule); border-radius: 999px; padding: 3px 10px;
+}
+.side.argus .tag { color: var(--accent); border-color: var(--accent); }
+
+/* Visual + notes */
+.stage { display: grid; gap: 24px; }
+.trad .stage { grid-template-columns: minmax(0, 1fr); }
+
+.ad { position: relative; margin: 0; }
+.ad img {
+  display: block; width: 100%; height: auto; border-radius: 10px;
+  box-shadow: var(--shadow); background: #fff;
+}
+.trad .ad { max-width: 330px; }
+
+.pin {
+  position: absolute; z-index: 2;
+  width: 28px; height: 28px; margin: -14px 0 0 -14px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--ink); color: var(--bg);
+  font-family: var(--f-ui); font-weight: 600; font-size: 14px; line-height: 1;
+  box-shadow: 0 0 0 3px var(--pin-ring), 0 4px 10px rgba(0,0,0,.25);
+  transition: transform .18s ease, background-color .18s ease;
+}
+.argus .pin { background: var(--accent); color: #fff; }
+.pin.on { transform: scale(1.25); }
+
+.notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.notes li {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start;
+  padding: 10px 12px; margin: -10px -12px; border-radius: 10px; cursor: default;
+  transition: background-color .18s ease;
+}
+.notes li:hover, .notes li:focus-visible, .notes li.on { background: var(--panel); }
+.notes li:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.num {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--ink);
+  font-family: var(--f-ui); font-weight: 600; font-size: 14px; line-height: 1;
+}
+.argus .num { border-color: var(--accent); color: var(--accent); }
+.notes strong { display: block; font-weight: 700; font-size: 17px; line-height: 1.3; }
+.notes span.d { display: block; color: var(--muted); font-size: 15px; line-height: 1.45; margin-top: 2px; }
+
+/* Traditional side: ad left, notes right when there's room */
+.trad .stage { grid-template-columns: minmax(0, 1fr); }
+
+/* ARGUS collage: four staggered columns */
+.collage {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: start;
+}
+.col { display: grid; gap: 14px; min-width: 0; }
+.col:nth-child(2) { margin-top: 44px; }
+.col:nth-child(3) { margin-top: 18px; }
+.col:nth-child(4) { margin-top: 66px; }
+.more {
+  border: 1.5px dashed var(--rule); border-radius: 10px;
+  aspect-ratio: 9 / 11; max-width: 100%;
+  display: grid; place-content: center; text-align: center; gap: 2px; padding: 12px;
+  color: var(--muted); font-family: var(--f-ui); font-size: 13px; font-weight: 500; line-height: 1.3;
+}
+.more b { font-family: var(--f-body); font-weight: 800; font-size: 26px; color: var(--ink); }
+.argus .notes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; }
+
+/* Stats */
+.stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0;
+  border-top: 1.5px solid var(--ink); padding-top: 16px;
+}
+.stat { min-width: 0; display: grid; gap: 4px; padding-right: 16px; }
+.stat + .stat { padding-left: 16px; border-left: 1px solid var(--rule); }
+.stat dt {
+  font-family: var(--f-ui); font-weight: 600; font-size: 11.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.stat dd { margin: 0; font-weight: 800; font-size: clamp(22px, 2.6vw, 30px); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat dd small { display: block; font-weight: 400; font-size: 14px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+.argus .stat dd.hi { color: var(--accent); }
+.stats dl, .stats { margin: 0; }
+
+/* Time to scale */
+.scale {
+  margin-top: 56px; padding: 24px; border-radius: 14px; background: var(--panel);
+  display: grid; gap: 16px;
+}
+.scale h3 { margin: 0; font-size: 19px; font-weight: 700; }
+.scale p.sub { margin: -10px 0 0; color: var(--muted); font-size: 14px; }
+.bar-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; align-items: center; }
+.bar-row .lbl { font-family: var(--f-ui); font-weight: 600; font-size: 13px; letter-spacing: .04em; }
+.track { position: relative; height: 30px; display: flex; align-items: center; gap: 10px; }
+.fill { height: 100%; border-radius: 6px; background: var(--ink); flex: none; }
+.fill.trad { width: calc(100% - 92px); }
+.fill.argus { width: max(6px, calc((100% - 92px) * 2 / 210)); background: var(--accent); }
+.val { font-weight: 800; font-size: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.val em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 14px; }
+
+footer.note { margin-top: 28px; color: var(--muted); font-size: 13px; font-family: var(--f-ui); }
+
+/* Narrow layouts */
+@media (max-width: 900px) {
+  .compare { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .divider { width: auto; height: 14px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='14' viewBox='0 0 40 14'%3E%3Cpath d='M0 7 C 6 3, 10 11, 16 7 S 26 3, 32 7 S 38 10, 40 7' fill='none' stroke='%23b99a88' stroke-width='1.6' stroke-linecap='round' stroke-dasharray='5 4'/%3E%3C/svg%3E"); background-repeat: repeat-x; background-position: left center; }
+  .trad .stage { grid-template-columns: minmax(0, 260px) minmax(0, 1fr); align-items: center; }
+}
+@media (max-width: 620px) {
+  .wrap { padding-block: 32px 48px; }
+  .trad .stage { grid-template-columns: minmax(0, 1fr); }
+  .trad .ad { max-width: 300px; }
+  .collage { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .col:nth-child(n) { margin-top: 0; }
+  .col:nth-child(2), .col:nth-child(4) { margin-top: 30px; }
+  .argus .notes { grid-template-columns: minmax(0, 1fr); }
+  .stats { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .stat, .stat + .stat { padding: 0; border-left: 0; }
+  .stat + .stat { padding-top: 14px; border-top: 1px solid var(--rule); }
+  .bar-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pin, .notes li { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Macmillan ad toolkit · How a campaign gets made</div>
+    <h1>One title, two ways to advertise it</h1>
+    <p class="lede">The same Tor Books feed, before and after. On the left, a typical hand-built social ad. On the right, the set ARGUS drafts for a launch: search-tuned copy, several creative directions, every placement, ready for one person to approve.</p>
+  </header>
+
+  <main class="compare">
+    <!-- Traditional -->
+    <section class="side trad" aria-labelledby="h-trad">
+      <div class="side-head">
+        <h2 id="h-trad">Traditional process</h2>
+        <span class="tag">Today</span>
+      </div>
+
+      <div class="stage">
+        <figure class="ad">
+          <img src="img/trad-wolfworm.jpg" width="484" height="901" alt="Tor Books Facebook ad for Wolf Worm by T. Kingfisher: a Publishers Weekly pull quote above a photo of the paperback on a wooden table, with 28 reactions.">
+          <span class="pin" data-pin="t1" style="left: 96%; top: 12.5%;">1</span>
+          <span class="pin" data-pin="t2" style="left: 84%; top: 46%;">2</span>
+          <span class="pin" data-pin="t3" style="left: 50%; top: 91.6%;">3</span>
+        </figure>
+
+        <ol class="notes">
+          <li tabindex="0" data-pin="t1"><span class="num">1</span><div><strong>Pull-quote copy</strong><span class="d">A review quote works for trade buyers but underperforms heavily with consumers.</span></div></li>
+          <li tabindex="0" data-pin="t2"><span class="num">2</span><div><strong>One static image</strong><span class="d">A product shot that doesn't stand out in the feed, with no variation in creative to test against.</span></div></li>
+          <li tabindex="0" data-pin="t3"><span class="num">3</span><div><strong>Low engagement</strong><span class="d">28 reactions, no comments, no shares.</span></div></li>
+        </ol>
+      </div>
+
+      <dl class="stats">
+        <div class="stat"><dt>People</dt><dd>Several<small>Multiple personnel and creative discussions</small></dd></div>
+        <div class="stat"><dt>Est. time</dt><dd>3.5 hrs</dd></div>
+        <div class="stat"><dt>Output</dt><dd>1 ad</dd></div>
+      </dl>
+    </section>
+
+    <div class="divider" aria-hidden="true"></div>
+
+    <!-- ARGUS -->
+    <section class="side argus" aria-labelledby="h-argus">
+      <div class="side-head">
+        <h2 id="h-argus" class="wordmark">argus</h2>
+        <span class="tag">With ARGUS</span>
+      </div>
+
+      <div class="stage">
+        <div class="collage">
+          <div class="col">
+            <figure class="ad">
+              <img src="img/argus-tradwife.jpg" width="404" height="681" alt="Facebook ad for The Secret Lives of Zombie Wives with the headline Tradwife. Influencer. Zombie., 942 reactions and 27 comments.">
+              <span class="pin" data-pin="a1" style="left: 95%; top: 13%;">1</span>
+              <span class="pin" data-pin="a3" style="left: 50%; top: 91%;">3</span>
+            </figure>
+            <figure class="ad">
+              <img src="img/argus-carousel.jpg" width="458" height="876" alt="Instagram carousel ad for The Secret Lives of Zombie Wives with four more Tor titles shown below the main cover.">
+              <span class="pin" data-pin="a4" style="left: 50%; top: 67%;">4</span>
+            </figure>
+          </div>
+          <div class="col">
+            <figure class="ad">
+              <img src="img/argus-talent.jpg" width="378" height="629" alt="Facebook ad with a zombie housewife holding a tray of brains and the headline I bring the talent. My husband brings the brains., 182 reactions.">
+              <span class="pin" data-pin="a2" style="left: 84%; top: 40%;">2</span>
+            </figure>
+            <figure class="ad">
+              <img src="img/argus-reel.jpg" width="396" height="698" alt="Facebook Reels video ad showing the red Zombie Wives cover with an Order now button.">
+            </figure>
+          </div>
+          <div class="col">
+            <figure class="ad">
+              <img src="img/argus-ig-table.jpg" width="442" height="886" alt="Instagram feed ad showing the Zombie Wives hardcover on a sunlit kitchen table.">
+            </figure>
+            <figure class="ad">
+              <img src="img/argus-ig-red.jpg" width="402" height="712" alt="Instagram story-style ad with the Zombie Wives cover on a red background.">
+            </figure>
+          </div>
+          <div class="col">
+            <figure class="ad">
+              <img src="img/argus-fb-table.jpg" width="348" height="710" alt="Facebook feed ad linking to us.macmillan.com with the Zombie Wives hardcover on a kitchen table.">
+            </figure>
+            <div class="more" aria-label="Three more variations"><b>+3</b>more variations<br>in the set</div>
+          </div>
+        </div>
+
+        <ol class="notes">
+          <li tabindex="0" data-pin="a1"><span class="num">1</span><div><strong>Search-tuned ad copy</strong><span class="d">Keyword-heavy lines written for SEO and GEO, so the ad matches how readers actually search.</span></div></li>
+          <li tabindex="0" data-pin="a2"><span class="num">2</span><div><strong>Creative variations</strong><span class="d">Several distinct concepts per title, from humor to mood shots, ready to test against each other.</span></div></li>
+          <li tabindex="0" data-pin="a3"><span class="num">3</span><div><strong>High engagement</strong><span class="d">Creative and copy optimized by AI. 942 reactions and 27 comments on the lead ad.</span></div></li>
+          <li tabindex="0" data-pin="a4"><span class="num">4</span><div><strong>Multi-title ads</strong><span class="d">Carousels pair the lead title with related backlist from the same imprint.</span></div></li>
+        </ol>
+      </div>
+
+      <dl class="stats">
+        <div class="stat"><dt>People</dt><dd>One<small>A single stakeholder signs off</small></dd></div>
+        <div class="stat"><dt>Est. time</dt><dd class="hi">2 min<small>plus approval</small></dd></div>
+        <div class="stat"><dt>Output</dt><dd class="hi">10+ ads</dd></div>
+      </dl>
+    </section>
+  </main>
+
+  <section class="scale" aria-labelledby="h-scale">
+    <h3 id="h-scale">Time to a finished ad set, drawn to scale</h3>
+    <p class="sub">Estimated working time before the campaign can launch.</p>
+    <div class="bar-row">
+      <span class="lbl">Traditional</span>
+      <div class="track"><span class="fill trad"></span><span class="val">210 min</span></div>
+    </div>
+    <div class="bar-row">
+      <span class="lbl">ARGUS</span>
+      <div class="track"><span class="fill argus"></span><span class="val">2 min <em>+ approval</em></span></div>
+    </div>
+  </section>
+
+  <footer class="note">Times are estimates for a single title launch.</footer>
+</div>
+
+<script>
+(function () {
+  var items = document.querySelectorAll('.notes li[data-pin]');
+  function set(id, on) {
+    document.querySelectorAll('[data-pin="' + id + '"]').forEach(function (el) { el.classList.toggle('on', on); });
+  }
+  items.forEach(function (li) {
+    var id = li.getAttribute('data-pin');
+    li.addEventListener('mouseenter', function () { set(id, true); });
+    li.addEventListener('mouseleave', function () { set(id, false); });
+    li.addEventListener('focus', function () { set(id, true); });
+    li.addEventListener('blur', function () { set(id, false); });
+  });
+  document.querySelectorAll('.pin').forEach(function (p) {
+    var id = p.getAttribute('data-pin');
+    p.addEventListener('mouseenter', function () { set(id, true); });
+    p.addEventListener('mouseleave', function () { set(id, false); });
+  });
+})();
+</script>
+
+</html>
